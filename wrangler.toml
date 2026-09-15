@@ -1,0 +1,30 @@
+# Cloudflare Workers config for the EV Charging Cost Calculator static site.
+# Deploys the built ./site directory via Workers Static Assets. The site's
+# _redirects (308 aliases) and _headers (security headers) are handled NATIVELY
+# by Workers Static Assets; worker.js is a passthrough + future extension point.
+#
+# REQUIRED before `wrangler deploy`:
+#   1) Authenticate:  run `wrangler login` on your machine, OR set an API token:
+#        export CLOUDFLARE_API_TOKEN="<token with Workers Scripts + Workers Scripts
+#                                      Content Storage + Account Settings:Read>"
+#        export CLOUDFLARE_ACCOUNT_ID="<your Cloudflare account id>"
+#      (Get the token at https://dash.cloudflare.com/profile/api-tokens
+#       use the "Edit Cloudflare Workers" template, or a custom token with the
+#       two permissions above. Account ID is on the right side of any zone /
+#       Workers dashboard page.)
+#   2) (Optional) Custom domain: add a Custom Domain in the Cloudflare dashboard.
+#      The site currently references https://evchargingcostcalculator.com in
+#      robots.txt — set that domain there (or change robots.txt).
+
+name = "ev-charging-cost-calculator"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./site"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"
+
+[observability]
+enabled = true
