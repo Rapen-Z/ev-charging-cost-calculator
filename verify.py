@@ -5,7 +5,7 @@
 
 Exit code 0 means: pages built, no broken links, no banned expressions,
 calc.js and gen.py produce identical numbers, and every acceptance task
-T1–T8 passes in a DOM.
+T1–T9 passes in a DOM.
 """
 from __future__ import annotations
 
@@ -19,12 +19,20 @@ ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 PY = sys.executable
 
+
+def _node_candidates() -> list[str]:
+    """Prefer node on PATH, else the newest managed runtime. Discovered at run
+    time so a runtime bump does not silently break verification."""
+    found = [n for n in (shutil.which("node"),) if n]
+    versions = Path.home() / ".workbuddy" / "binaries" / "node" / "versions"
+    if versions.is_dir():
+        found += [str(p / "node.exe") for p in sorted(versions.iterdir(), reverse=True)]
+    return found
+
+
 # The DOM suite needs jsdom, which is not installed next to the site.
-NODE_CANDIDATES = [
-    shutil.which("node"),
-    r"C:\Users\13568\.workbuddy\binaries\node\versions\22.22.2-2\node.exe",
-]
-JSDOM_PATH = r"C:\Users\13568\.workbuddy\binaries\node\workspace\node_modules"
+NODE_CANDIDATES = _node_candidates()
+JSDOM_PATH = str(Path.home() / ".workbuddy" / "binaries" / "node" / "workspace" / "node_modules")
 
 
 def run(cmd, cwd, env=None, label=""):
@@ -54,7 +62,7 @@ def main() -> int:
     if code != 0 or "ENGINE PARITY OK" not in out:
         failures.append("engine parity")
 
-    # 3. DOM smoke (T1–T8)
+    # 3. DOM smoke (T1–T9)
     env = dict(os.environ, NODE_PATH=JSDOM_PATH)
     code, out = run([node, "tests/smoke_dom.mjs"], SITE, env=env, label="DOM smoke T1-T9")
     if code != 0 or "DOM SMOKE OK" not in out:
