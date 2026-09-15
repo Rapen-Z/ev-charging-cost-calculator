@@ -1,0 +1,382 @@
+{
+ "sources": {
+  "electricity": {
+   "name": "U.S. EIA — Form 861M, Electric Power Sales & Revenue (state, monthly)",
+   "url": "https://www.eia.gov/electricity/data/state/",
+   "file": "https://www.eia.gov/electricity/data/state/xls/861m/HS861M%202010-.xlsx",
+   "sector": "Residential",
+   "unit": "cents per kWh (converted to USD/kWh)",
+   "period": "2026-06"
+  },
+  "gasoline": {
+   "name": "U.S. EIA — Weekly Retail Gasoline and Diesel Prices, U.S. All Grades All Formulations",
+   "url": "https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_nus_w.htm",
+   "file": "https://www.eia.gov/dnav/pet/hist_xls/EMM_EPM0_PTE_NUS_DPGw.xls",
+   "unit": "USD per gallon",
+   "weekEnding": "2026-09-07"
+  }
+ },
+ "fetchedAt": "2026-09-10T08:02:32Z",
+ "usAverageUsdPerKwh": 0.1942,
+ "usAverageGasolineUsdPerGal": 4.295,
+ "stateCount": 51,
+ "states": {
+  "AK": {
+   "code": "AK",
+   "name": "Alaska",
+   "usdPerKwh": 0.2821,
+   "centsPerKwh": 28.21,
+   "period": "2026-06"
+  },
+  "AL": {
+   "code": "AL",
+   "name": "Alabama",
+   "usdPerKwh": 0.164,
+   "centsPerKwh": 16.4,
+   "period": "2026-06"
+  },
+  "AR": {
+   "code": "AR",
+   "name": "Arkansas",
+   "usdPerKwh": 0.1412,
+   "centsPerKwh": 14.12,
+   "period": "2026-06"
+  },
+  "AZ": {
+   "code": "AZ",
+   "name": "Arizona",
+   "usdPerKwh": 0.1518,
+   "centsPerKwh": 15.18,
+   "period": "2026-06"
+  },
+  "CA": {
+   "code": "CA",
+   "name": "California",
+   "usdPerKwh": 0.3474,
+   "centsPerKwh": 34.74,
+   "period": "2026-06"
+  },
+  "CO": {
+   "code": "CO",
+   "name": "Colorado",
+   "usdPerKwh": 0.1713,
+   "centsPerKwh": 17.13,
+   "period": "2026-06"
+  },
+  "CT": {
+   "code": "CT",
+   "name": "Connecticut",
+   "usdPerKwh": 0.2432,
+   "centsPerKwh": 24.32,
+   "period": "2026-06"
+  },
+  "DC": {
+   "code": "DC",
+   "name": "District of Columbia",
+   "usdPerKwh": 0.2439,
+   "centsPerKwh": 24.39,
+   "period": "2026-06"
+  },
+  "DE": {
+   "code": "DE",
+   "name": "Delaware",
+   "usdPerKwh": 0.1929,
+   "centsPerKwh": 19.29,
+   "period": "2026-06"
+  },
+  "FL": {
+   "code": "FL",
+   "name": "Florida",
+   "usdPerKwh": 0.151,
+   "centsPerKwh": 15.1,
+   "period": "2026-06"
+  },
+  "GA": {
+   "code": "GA",
+   "name": "Georgia",
+   "usdPerKwh": 0.1636,
+   "centsPerKwh": 16.36,
+   "period": "2026-06"
+  },
+  "HI": {
+   "code": "HI",
+   "name": "Hawaii",
+   "usdPerKwh": 0.5272,
+   "centsPerKwh": 52.72,
+   "period": "2026-06"
+  },
+  "IA": {
+   "code": "IA",
+   "name": "Iowa",
+   "usdPerKwh": 0.1593,
+   "centsPerKwh": 15.93,
+   "period": "2026-06"
+  },
+  "ID": {
+   "code": "ID",
+   "name": "Idaho",
+   "usdPerKwh": 0.1437,
+   "centsPerKwh": 14.37,
+   "period": "2026-06"
+  },
+  "IL": {
+   "code": "IL",
+   "name": "Illinois",
+   "usdPerKwh": 0.1989,
+   "centsPerKwh": 19.89,
+   "period": "2026-06"
+  },
+  "IN": {
+   "code": "IN",
+   "name": "Indiana",
+   "usdPerKwh": 0.1751,
+   "centsPerKwh": 17.51,
+   "period": "2026-06"
+  },
+  "KS": {
+   "code": "KS",
+   "name": "Kansas",
+   "usdPerKwh": 0.1571,
+   "centsPerKwh": 15.71,
+   "period": "2026-06"
+  },
+  "KY": {
+   "code": "KY",
+   "name": "Kentucky",
+   "usdPerKwh": 0.1426,
+   "centsPerKwh": 14.26,
+   "period": "2026-06"
+  },
+  "LA": {
+   "code": "LA",
+   "name": "Louisiana",
+   "usdPerKwh": 0.1349,
+   "centsPerKwh": 13.49,
+   "period": "2026-06"
+  },
+  "MA": {
+   "code": "MA",
+   "name": "Massachusetts",
+   "usdPerKwh": 0.2961,
+   "centsPerKwh": 29.61,
+   "period": "2026-06"
+  },
+  "MD": {
+   "code": "MD",
+   "name": "Maryland",
+   "usdPerKwh": 0.2184,
+   "centsPerKwh": 21.84,
+   "period": "2026-06"
+  },
+  "ME": {
+   "code": "ME",
+   "name": "Maine",
+   "usdPerKwh": 0.2959,
+   "centsPerKwh": 29.59,
+   "period": "2026-06"
+  },
+  "MI": {
+   "code": "MI",
+   "name": "Michigan",
+   "usdPerKwh": 0.2299,
+   "centsPerKwh": 22.99,
+   "period": "2026-06"
+  },
+  "MN": {
+   "code": "MN",
+   "name": "Minnesota",
+   "usdPerKwh": 0.1752,
+   "centsPerKwh": 17.52,
+   "period": "2026-06"
+  },
+  "MO": {
+   "code": "MO",
+   "name": "Missouri",
+   "usdPerKwh": 0.1622,
+   "centsPerKwh": 16.22,
+   "period": "2026-06"
+  },
+  "MS": {
+   "code": "MS",
+   "name": "Mississippi",
+   "usdPerKwh": 0.1488,
+   "centsPerKwh": 14.88,
+   "period": "2026-06"
+  },
+  "MT": {
+   "code": "MT",
+   "name": "Montana",
+   "usdPerKwh": 0.1514,
+   "centsPerKwh": 15.14,
+   "period": "2026-06"
+  },
+  "NC": {
+   "code": "NC",
+   "name": "North Carolina",
+   "usdPerKwh": 0.1474,
+   "centsPerKwh": 14.74,
+   "period": "2026-06"
+  },
+  "ND": {
+   "code": "ND",
+   "name": "North Dakota",
+   "usdPerKwh": 0.1412,
+   "centsPerKwh": 14.12,
+   "period": "2026-06"
+  },
+  "NE": {
+   "code": "NE",
+   "name": "Nebraska",
+   "usdPerKwh": 0.1325,
+   "centsPerKwh": 13.25,
+   "period": "2026-06"
+  },
+  "NH": {
+   "code": "NH",
+   "name": "New Hampshire",
+   "usdPerKwh": 0.2701,
+   "centsPerKwh": 27.01,
+   "period": "2026-06"
+  },
+  "NJ": {
+   "code": "NJ",
+   "name": "New Jersey",
+   "usdPerKwh": 0.2495,
+   "centsPerKwh": 24.95,
+   "period": "2026-06"
+  },
+  "NM": {
+   "code": "NM",
+   "name": "New Mexico",
+   "usdPerKwh": 0.1506,
+   "centsPerKwh": 15.06,
+   "period": "2026-06"
+  },
+  "NV": {
+   "code": "NV",
+   "name": "Nevada",
+   "usdPerKwh": 0.1311,
+   "centsPerKwh": 13.11,
+   "period": "2026-06"
+  },
+  "NY": {
+   "code": "NY",
+   "name": "New York",
+   "usdPerKwh": 0.2949,
+   "centsPerKwh": 29.49,
+   "period": "2026-06"
+  },
+  "OH": {
+   "code": "OH",
+   "name": "Ohio",
+   "usdPerKwh": 0.1919,
+   "centsPerKwh": 19.19,
+   "period": "2026-06"
+  },
+  "OK": {
+   "code": "OK",
+   "name": "Oklahoma",
+   "usdPerKwh": 0.1433,
+   "centsPerKwh": 14.33,
+   "period": "2026-06"
+  },
+  "OR": {
+   "code": "OR",
+   "name": "Oregon",
+   "usdPerKwh": 0.1632,
+   "centsPerKwh": 16.32,
+   "period": "2026-06"
+  },
+  "PA": {
+   "code": "PA",
+   "name": "Pennsylvania",
+   "usdPerKwh": 0.2173,
+   "centsPerKwh": 21.73,
+   "period": "2026-06"
+  },
+  "RI": {
+   "code": "RI",
+   "name": "Rhode Island",
+   "usdPerKwh": 0.2923,
+   "centsPerKwh": 29.23,
+   "period": "2026-06"
+  },
+  "SC": {
+   "code": "SC",
+   "name": "South Carolina",
+   "usdPerKwh": 0.1555,
+   "centsPerKwh": 15.55,
+   "period": "2026-06"
+  },
+  "SD": {
+   "code": "SD",
+   "name": "South Dakota",
+   "usdPerKwh": 0.1536,
+   "centsPerKwh": 15.36,
+   "period": "2026-06"
+  },
+  "TN": {
+   "code": "TN",
+   "name": "Tennessee",
+   "usdPerKwh": 0.1407,
+   "centsPerKwh": 14.07,
+   "period": "2026-06"
+  },
+  "TX": {
+   "code": "TX",
+   "name": "Texas",
+   "usdPerKwh": 0.1594,
+   "centsPerKwh": 15.94,
+   "period": "2026-06"
+  },
+  "UT": {
+   "code": "UT",
+   "name": "Utah",
+   "usdPerKwh": 0.1337,
+   "centsPerKwh": 13.37,
+   "period": "2026-06"
+  },
+  "VA": {
+   "code": "VA",
+   "name": "Virginia",
+   "usdPerKwh": 0.1722,
+   "centsPerKwh": 17.22,
+   "period": "2026-06"
+  },
+  "VT": {
+   "code": "VT",
+   "name": "Vermont",
+   "usdPerKwh": 0.2444,
+   "centsPerKwh": 24.44,
+   "period": "2026-06"
+  },
+  "WA": {
+   "code": "WA",
+   "name": "Washington",
+   "usdPerKwh": 0.1491,
+   "centsPerKwh": 14.91,
+   "period": "2026-06"
+  },
+  "WI": {
+   "code": "WI",
+   "name": "Wisconsin",
+   "usdPerKwh": 0.1956,
+   "centsPerKwh": 19.56,
+   "period": "2026-06"
+  },
+  "WV": {
+   "code": "WV",
+   "name": "West Virginia",
+   "usdPerKwh": 0.1545,
+   "centsPerKwh": 15.45,
+   "period": "2026-06"
+  },
+  "WY": {
+   "code": "WY",
+   "name": "Wyoming",
+   "usdPerKwh": 0.1524,
+   "centsPerKwh": 15.24,
+   "period": "2026-06"
+  }
+ }
+}

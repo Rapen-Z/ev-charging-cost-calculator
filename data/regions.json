@@ -1,0 +1,93 @@
+{
+  "_comment": "Non-US reference prices. Every figure is a published national average with its source and date — nothing here is invented. These are DEFAULT starting values only; every page lets the user override them.",
+  "fetchedAt": "2026-09-10",
+  "dcFastCharging": {
+    "usdPerKwh": 0.47,
+    "rangeUsdPerKwh": [0.35, 0.60],
+    "basis": "Representative US national average for non-member DC fast charging, compiled from published 2026 network pricing (Tesla Supercharger ~$0.42/kWh, EVgo ~$0.45/kWh, Electrify America ~$0.48/kWh mid-points).",
+    "sources": [
+      "https://evchargingstations.com/chargingnews/cost-dc-fast-charge-ev",
+      "https://chargecostlab.com/blog/ev-charging-cost-for-rideshare-uber-lyft-drivers-2026",
+      "https://www.evrangetools.com/blog/supercharger-vs-electrify-america-vs-evgo"
+    ],
+    "caveat": "Per-kWh pricing is not universal: several states require per-minute pricing, and most networks add idle or session fees. Treat as an estimate, not a quote.",
+    "confidence": "estimate — PRD marks the DCFC source list as [待确认]; no single official dataset exists."
+  },
+  "countries": [
+    {
+      "code": "uk",
+      "name": "United Kingdom",
+      "currency": "GBP",
+      "symbol": "£",
+      "ratePerKwh": 0.2611,
+      "unitLabel": "pence/kWh",
+      "rateDisplay": "26.11p",
+      "distanceUnit": "miles",
+      "fuelUnit": "litre",
+      "source": "Ofgem default tariff price cap, July–September 2026",
+      "sourceUrl": "https://www.ofgem.gov.uk/",
+      "asOf": "2026-07",
+      "note": "Unit rate on a standard variable tariff. A separate daily standing charge (roughly 57p/day) applies and is not included."
+    },
+    {
+      "code": "de",
+      "name": "Germany",
+      "currency": "EUR",
+      "symbol": "€",
+      "ratePerKwh": 0.356,
+      "unitLabel": "cents/kWh",
+      "rateDisplay": "35.6¢",
+      "distanceUnit": "km",
+      "fuelUnit": "litre",
+      "source": "Verivox analysis of household electricity prices, Q2 2026 (highest in the G20)",
+      "sourceUrl": "https://www.thelocal.de/index.php/20260831/global-comparison-reveals-germany-has-highest-energy-prices-in-the-g20",
+      "asOf": "2026-Q2",
+      "note": "Taxes, levies and grid fees make up more than 60% of the German household price."
+    },
+    {
+      "code": "ca",
+      "name": "Canada",
+      "currency": "CAD",
+      "symbol": "C$",
+      "ratePerKwh": 0.14,
+      "unitLabel": "cents/kWh",
+      "rateDisplay": "14¢",
+      "distanceUnit": "km",
+      "fuelUnit": "litre",
+      "source": "Natural Resources Canada (NRCan) national residential average",
+      "sourceUrl": "https://natural-resources.canada.ca/",
+      "asOf": "2026-08",
+      "note": "Provincial rates vary widely — Quebec and hydro-rich provinces sit well below the national average."
+    },
+    {
+      "code": "au",
+      "name": "Australia",
+      "currency": "AUD",
+      "symbol": "A$",
+      "ratePerKwh": 0.33,
+      "unitLabel": "cents/kWh",
+      "rateDisplay": "33¢",
+      "distanceUnit": "km",
+      "fuelUnit": "litre",
+      "source": "Australian Energy Regulator (AER) residential average",
+      "sourceUrl": "https://www.aer.gov.au/",
+      "asOf": "2026-08",
+      "note": "Excludes daily supply charges, which differ materially between states."
+    },
+    {
+      "code": "in",
+      "name": "India",
+      "currency": "INR",
+      "symbol": "₹",
+      "ratePerKwh": 8.0,
+      "unitLabel": "₹/kWh",
+      "rateDisplay": "₹8.00",
+      "distanceUnit": "km",
+      "fuelUnit": "litre",
+      "source": "IEA monthly residential electricity snapshot",
+      "sourceUrl": "https://www.iea.org/",
+      "asOf": "2026",
+      "note": "State tariffs and slab-based pricing mean the effective rate rises steeply with monthly consumption."
+    }
+  ]
+}
