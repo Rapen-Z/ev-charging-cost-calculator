@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# Build output — regenerate with:  python site/build.py
+#   Everything under site/ except the sources (*.py, src/, tests/) is produced
+#   by the build step (HTML routes, copied assets, redirects/headers, feeds).
+# ---------------------------------------------------------------------------
+/site/*
+!/site/src/
+!/site/tests/
+!/site/*.py
+
+# Local build / deploy output
+/dist/
+/.wrangler/
+/_review/
+/data/_raw/
+
+# Logs and caches
+*.log
+__pycache__/
+*.pyc
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp

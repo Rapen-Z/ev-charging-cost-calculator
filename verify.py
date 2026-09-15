@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""One command to verify the whole site: build, self-check, then both test suites.
+
+    python verify.py
+
+Exit code 0 means: pages built, no broken links, no banned expressions,
+calc.js and gen.py produce identical numbers, and every acceptance task
+T1–T8 passes in a DOM.
+"""
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+SITE = ROOT / "site"
+PY = sys.executable
+
+# The DOM suite needs jsdom, which is not installed next to the site.
+NODE_CANDIDATES = [
+    shutil.which("node"),
+    r"C:\Users\13568\.workbuddy\binaries\node\versions\22.22.2-2\node.exe",
+]
+JSDOM_PATH = r"C:\Users\13568\.workbuddy\binaries\node\workspace\node_modules"
+
+
+def run(cmd, cwd, env=None, label=""):
+    print(f"\n--- {label or ' '.join(cmd)} ---")
+    r = subprocess.run(cmd, cwd=str(cwd), env=env, capture_output=True, text=True)
+    out = (r.stdout or "") + (r.stderr or "")
+    print(out.rstrip())
+    return r.returncode, out
+
+
+def main() -> int:
+    failures = []
+
+    # 1. build + self-check
+    code, out = run([PY, "build.py"], SITE, label="build + self-check")
+    if code != 0 or "SELF-CHECK PASSED" not in out:
+        failures.append("build/self-check")
+
+    # 2. engine parity (JS vs Python)
+    node = next((n for n in NODE_CANDIDATES if n and Path(n).exists()), None)
+    if not node:
+        print("\n!! node not found — skipping JS test suites")
+        failures.append("node missing")
+        return 1
+
+    code, out = run([node, "tests/verify_engine.mjs"], SITE, label="engine parity")
+    if code != 0 or "ENGINE PARITY OK" not in out:
+        failures.append("engine parity")
+
+    # 3. DOM smoke (T1–T8)
+    env = dict(os.environ, NODE_PATH=JSDOM_PATH)
+    code, out = run([node, "tests/smoke_dom.mjs"], SITE, env=env, label="DOM smoke T1-T9")
+    if code != 0 or "DOM SMOKE OK" not in out:
+        failures.append("DOM smoke")
+
+    print("\n" + "=" * 58)
+    if failures:
+        print("VERIFY FAILED: " + ", ".join(failures))
+        return 1
+    print("VERIFY PASSED — build, self-check, engine parity, T1–T9")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
