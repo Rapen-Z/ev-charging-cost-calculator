@@ -39,10 +39,36 @@ def prerender_single(v, p, sym="$"):
     return "".join(out)
 
 
+def _cost_chart(pairs, sym="$"):
+    if not pairs or len(pairs) < 2:
+        return ""
+    max_m = max((r["monthly"] for _, r in pairs), default=1) or 1
+    best = min(pairs, key=lambda x: x[1]["monthly"])
+    bars = []
+    for v, r in pairs:
+        pct = max(12, min(100, round((r["monthly"] / max_m) * 100)))
+        is_win = (v is best[0])
+        badge = '<span class="cost-bar__badge">Lowest</span>' if is_win else ''
+        win_cls = ' is-winner' if is_win else ''
+        bars.append(
+            f'<div class="cost-bar{win_cls}">'
+            f'<div class="cost-bar__header">'
+            f'<span class="cost-bar__name">{esc(v["name"])} {badge}</span>'
+            f'<span class="cost-bar__val">{money(r["monthly"], sym)}/mo</span>'
+            f'</div>'
+            f'<div class="cost-bar__track">'
+            f'<div class="cost-bar__fill" style="width:{pct}%"></div>'
+            f'</div>'
+            f'</div>'
+        )
+    return f'<div class="cost-chart"><div class="cost-chart__title">Monthly Cost Comparison</div>{"".join(bars)}</div>'
+
+
 def prerender_compare(pairs, p, sym="$"):
     best = min(pairs, key=lambda x: x[1]["monthly"])
     out = [f'<p class="result-lead">{money(best[1]["monthly"], sym)}<small> / month</small></p>',
            f'<p class="result-sub">Cheapest option: {esc(best[0]["name"])}</p>',
+           _cost_chart(pairs, sym),
            '<div class="compare"><table><thead><tr><th>Vehicle</th><th>Type</th>'
            '<th>Month</th><th>Year</th><th>Per mile</th></tr></thead><tbody>']
     for v, r in pairs:
@@ -87,25 +113,73 @@ def card_grid(items):
     return f'<div class="card-grid">{cells}</div>'
 
 
-def _ld_app_faq(name, route, description, faqs):
+def _ld_app_faq(name, route, description, faqs=None):
     cfg = json.loads((gen.SRC / "config.json").read_text(encoding="utf-8"))
-    return {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": name,
-        "url": cfg["base"] + route,
-        "applicationCategory": "UtilityApplication",
-        "operatingSystem": "Any (web browser)",
-        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
-        "description": description,
-        "mainEntity": {
+    url = cfg["base"] + route
+    graph = [
+        {
+            "@type": "WebApplication",
+            "@id": url + "#app",
+            "name": name,
+            "url": url,
+            "applicationCategory": "UtilityApplication",
+            "operatingSystem": "Any (web browser)",
+            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+            "description": description,
+        }
+    ]
+    if faqs:
+        graph.append({
             "@type": "FAQPage",
+            "@id": url + "#faq",
             "mainEntity": [
                 {"@type": "Question", "name": q,
                  "acceptedAnswer": {"@type": "Answer", "text": a}}
                 for q, a in faqs
             ],
+        })
+    return {
+        "@context": "https://schema.org",
+        "@graph": graph,
+    }
+
+
+def _ld_state_page(name, route, description, faqs=None):
+    cfg = json.loads((gen.SRC / "config.json").read_text(encoding="utf-8"))
+    url = cfg["base"] + route
+    graph = [
+        {
+            "@type": "WebApplication",
+            "@id": url + "#app",
+            "name": f"{name} EV Charging Cost Calculator",
+            "url": url,
+            "applicationCategory": "UtilityApplication",
+            "operatingSystem": "Any (web browser)",
+            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+            "description": description,
         },
+        {
+            "@type": "Dataset",
+            "@id": url + "#dataset",
+            "name": f"{name} residential electricity price",
+            "description": f"EIA Form 861M residential average price for {name}.",
+            "url": url,
+            "variableMeasured": "Residential electricity price (USD/kWh)",
+        }
+    ]
+    if faqs:
+        graph.append({
+            "@type": "FAQPage",
+            "@id": url + "#faq",
+            "mainEntity": [
+                {"@type": "Question", "name": q,
+                 "acceptedAnswer": {"@type": "Answer", "text": a}}
+                for q, a in faqs
+            ],
+        })
+    return {
+        "@context": "https://schema.org",
+        "@graph": graph,
     }
 
 
@@ -175,9 +249,11 @@ def build(vehicles, energy, regions, out_root):
         'The formula is shown on the calculator itself so you can check our arithmetic.</p>',
         '<h2>Charging cost by state</h2>',
         '<p>These pages prefill the EIA residential average for that state, so you land on a '
-        'number instead of a national guess.</p>',
+        'number instead of a national guess. Or explore the <a href="/charging-cost/">all 50 states charging cost ranking</a>.</p>',
         card_grid([(f'/charging-cost/{c.lower()}/', states[c]['name'],
-                    f"{money(states[c]['usdPerKwh'], '$', 4)}/kWh") for c in STATES_10]),
+                    f"{money(states[c]['usdPerKwh'], '$', 4)}/kWh") for c in STATES_10] + [
+            ('/charging-cost/', 'All 50 States Ranked →', 'Compare every US state')
+        ]),
         '<h2>Outside the United States</h2>',
         '<p>Local currency, local residential electricity price, same EPA efficiency data. '
         'Every price field stays editable.</p>',
@@ -185,6 +261,7 @@ def build(vehicles, energy, regions, out_root):
                     f"{c['rateDisplay']}/kWh") for c in regions['countries']]),
         '<h2>Every other calculator on this site</h2>',
         card_grid([
+            ('/charging-cost/', '50-State Leaderboard', 'All 50 US states ranked by cost'),
             ('/ev-vs-gas-cost-calculator/', 'EV vs Gas', 'Side-by-side monthly running cost'),
             ('/ev-vs-hybrid-cost-calculator/', 'EV vs Hybrid', 'Battery-electric against a hybrid'),
             ('/hybrid-vs-gas-cost-calculator/', 'Hybrid vs Gas', 'Fuel cost difference per year'),
@@ -244,6 +321,20 @@ def build(vehicles, energy, regions, out_root):
         f'<span class="c-name">{esc(v["name"])}</span>'
         f'<span class="c-meta">{v["miPerKwh"]:.2f} mi/kWh · {v["mpgeCombined"]:.0f} MPGe</span></a>'
         for v in teslas)
+    t_faqs = [
+        ("Is this run by Tesla?", "No. This is an independent estimator and is not "
+         "affiliated with, endorsed by, or sponsored by Tesla, Inc."),
+        ("How much does it cost to charge a Model Y at home?",
+         f"At the US average of about {money(us_kwh, '$', 4)}/kWh and 1,000 miles a month, the "
+         f"{esc(t0['name'])} works out near {money(monthly_cost(t0, p0)['monthly'])}/month. "
+         "Change the state to see your price."),
+        ("Does this include Supercharger idle fees?", "No. Idle and session fees vary by site and "
+         "are not included — only the per-kWh energy price."),
+        ("Which Tesla is cheapest to run?", "Generally the smallest battery and most efficient "
+         "drivetrain. Use the model list above to compare mi/kWh figures directly."),
+        ("Do I need to enter a ZIP code?", "No — pick your state."),
+        ("Can I share my result?", "Yes, the URL carries your inputs."),
+    ]
     content = [
         '<p class="eyebrow">Free · No signup · Not affiliated with Tesla, Inc.</p>',
         '<h1>Tesla Charging Cost Calculator</h1>',
@@ -262,26 +353,15 @@ def build(vehicles, energy, regions, out_root):
         '<p>Typically by a factor of about three. The exact gap depends on where you live: in states '
         'with cheap power the home advantage is enormous, while in high-price states the gap narrows. '
         'Move the "Charging at home" slider to see the crossover for your own mix.</p>',
-        faq_block([
-            ("Is this run by Tesla?", "No. This is an independent estimator and is not "
-             "affiliated with, endorsed by, or sponsored by Tesla, Inc."),
-            ("How much does it cost to charge a Model Y at home?",
-             f"At the US average of about {money(us_kwh, '$', 4)}/kWh and 1,000 miles a month, the "
-             f"{esc(t0['name'])} works out near {money(monthly_cost(t0, p0)['monthly'])}/month. "
-             "Change the state to see your price."),
-            ("Does this include Supercharger idle fees?", "No. Idle and session fees vary by site and "
-             "are not included — only the per-kWh energy price."),
-            ("Which Tesla is cheapest to run?", "Generally the smallest battery and most efficient "
-             "drivetrain. Use the model list above to compare mi/kWh figures directly."),
-            ("Do I need to enter a ZIP code?", "No — pick your state."),
-            ("Can I share my result?", "Yes, the URL carries your inputs."),
-        ]),
+        faq_block(t_faqs),
         sources_block(energy, regions, vehicles),
     ]
     write("/tesla-charging-cost-calculator/", render_page(
         "/tesla-charging-cost-calculator/", "Tesla Charging Cost Calculator (2026)",
         "Estimate the monthly charging cost for every Tesla model at your local electricity price.",
-        "".join(content), tesla=True), out_root)
+        "".join(content), tesla=True,
+        jsonld=_ld_app_faq("Tesla Charging Cost Calculator", "/tesla-charging-cost-calculator/",
+                           "Estimate monthly charging cost for every Tesla model.", t_faqs)), out_root)
     routes.append("/tesla-charging-cost-calculator/")
 
     # ---------------- Tesla model pages ----------------
@@ -289,6 +369,19 @@ def build(vehicles, energy, regions, out_root):
         r = monthly_cost(v, p0)
         mpk = v["miPerKwh"]
         full = v.get("totalRangeMi") or 0
+        vm_faqs = [
+            (f'How much does it cost to charge a {esc(v["name"])} per month?',
+             f'At the US average residential rate and 1,000 miles a month, about '
+             f'{money(r["monthly"])}. Your number will differ with your local rate and mileage.'),
+            (f'How far will the {esc(v["name"])} go on 1 kWh?',
+             f'About {mpk:.2f} miles per kWh on the EPA combined cycle '
+             f'({v["kwhPer100MiCombined"]:.1f} kWh per 100 miles).'),
+            ("Do these figures come from Tesla?", "No — they are the EPA's published ratings "
+             "for this vehicle. This site is not affiliated with Tesla, Inc."),
+            ("Does this include charger installation?", "No — running cost only."),
+            ("Does winter change it?", "Yes. Tick the winter correction for roughly 15% more energy."),
+            ("Can I share this result?", "Yes — the URL carries your inputs."),
+        ]
         content = [
             f'<p class="eyebrow">Free · No signup · Not affiliated with Tesla, Inc.</p>',
             f'<h1>{esc(v["name"])} Charging Cost (2026)</h1>',
@@ -316,19 +409,7 @@ def build(vehicles, energy, regions, out_root):
             '<p>Home charging is billed at your utility rate; DC fast charging is billed at the '
             'network rate and is usually around three times higher. The slider in the calculator above '
             'lets you set the split.</p>',
-            faq_block([
-                (f'How much does it cost to charge a {esc(v["name"])} per month?',
-                 f'At the US average residential rate and 1,000 miles a month, about '
-                 f'{money(r["monthly"])}. Your number will differ with your local rate and mileage.'),
-                (f'How far will the {esc(v["name"])} go on 1 kWh?',
-                 f'About {mpk:.2f} miles per kWh on the EPA combined cycle '
-                 f'({v["kwhPer100MiCombined"]:.1f} kWh per 100 miles).'),
-                ("Do these figures come from Tesla?", "No — they are the EPA's published ratings "
-                 "for this vehicle. This site is not affiliated with Tesla, Inc."),
-                ("Does this include charger installation?", "No — running cost only."),
-                ("Does winter change it?", "Yes. Tick the winter correction for roughly 15% more energy."),
-                ("Can I share this result?", "Yes — the URL carries your inputs."),
-            ]),
+            faq_block(vm_faqs),
             '<h2>Other Tesla models</h2>',
             card_grid([(f'/tesla-charging-cost-calculator/{o["slug"]}/', o['name'],
                         f"{o['miPerKwh']:.2f} mi/kWh")
@@ -338,7 +419,7 @@ def build(vehicles, energy, regions, out_root):
                 ('/tesla-charging-cost-calculator/', 'All Tesla models', 'Back to the model hub'),
                 ('/ev-vs-gas-cost-calculator/', 'EV vs Gas',
                  f'How the {v["name"]} compares on fuel cost'),
-                ('/charging-cost/ca/', 'Charging cost by state', 'Local electricity prices'),
+                ('/charging-cost/', 'State cost leaderboard', 'All 50 states ranked'),
             ]),
             sources_block(energy, regions, vehicles),
         ]
@@ -346,7 +427,9 @@ def build(vehicles, energy, regions, out_root):
         write(route, render_page(route, f'{v["name"]} Charging Cost Calculator (2026)',
                                  f'Estimate the monthly charging cost of a {v["name"]} at your local '
                                  f'electricity price. EPA {mpk:.2f} mi/kWh.',
-                                 "".join(content), tesla=True), out_root)
+                                 "".join(content), tesla=True,
+                                 jsonld=_ld_app_faq(f'{v["name"]} Charging Cost Calculator', route,
+                                                    f'Estimate monthly charging cost of a {v["name"]}.', vm_faqs)), out_root)
         routes.append(route)
 
     # ---------------- comparison pages ----------------
@@ -439,6 +522,17 @@ def build(vehicles, energy, regions, out_root):
 
     # ---------------- PHEV calculator (T7) ----------------
     pv = first_of(["phev"])
+    phev_faqs = [
+        ("What is the EPA utility factor?", "The EPA's estimate of the proportion of miles a "
+         "plug-in hybrid will drive on electricity, based on real-world driving and charging data."),
+        ("Is a PHEV worth it without home charging?", "Rarely on fuel cost alone. Switch the home "
+         "charging control off to see the difference for the model you are considering."),
+        ("Does this include the petrol part?", "Yes — petrol miles are costed at the model's "
+         "charge-sustaining MPG at the fuel price you set."),
+        ("Do you include installation of a home charger?", "No — running cost only."),
+        ("Can I share my result?", "Yes, via the URL."),
+        ("Is this a quote?", "No, an estimate."),
+    ]
     content = [
         '<p class="eyebrow">Free · No signup · Runs in your browser</p>',
         '<h1>PHEV Charging Cost Calculator</h1>',
@@ -457,27 +551,29 @@ def build(vehicles, energy, regions, out_root):
         'usually no more efficient than a conventional hybrid.</p>',
         '<p>Turn off <em>Home charging available</em> above and the result is recosted on petrol alone. '
         'That is the honest answer to "should I buy a PHEV if I cannot charge at home?".</p>',
-        faq_block([
-            ("What is the EPA utility factor?", "The EPA's estimate of the proportion of miles a "
-             "plug-in hybrid will drive on electricity, based on real-world driving and charging data."),
-            ("Is a PHEV worth it without home charging?", "Rarely on fuel cost alone. Switch the home "
-             "charging control off to see the difference for the model you are considering."),
-            ("Does this include the petrol part?", "Yes — petrol miles are costed at the model's "
-             "charge-sustaining MPG at the fuel price you set."),
-            ("Do you include installation of a home charger?", "No — running cost only."),
-            ("Can I share my result?", "Yes, via the URL."),
-            ("Is this a quote?", "No, an estimate."),
-        ]),
+        faq_block(phev_faqs),
         sources_block(energy, regions, vehicles),
     ]
     write("/phev-charging-cost-calculator/", render_page(
         "/phev-charging-cost-calculator/", "PHEV Charging Cost Calculator (2026)",
         "Estimate the monthly running cost of a plug-in hybrid using the EPA-published utility factor, "
-        "with and without home charging.", "".join(content)), out_root)
+        "with and without home charging.", "".join(content),
+        jsonld=_ld_app_faq("PHEV Charging Cost Calculator", "/phev-charging-cost-calculator/",
+                           "Estimate monthly running costs of a plug-in hybrid vehicle.", phev_faqs)), out_root)
     routes.append("/phev-charging-cost-calculator/")
 
     # ---------------- gas calculator ----------------
     gv = first_of(["gas"])
+    gas_faqs = [
+        ("How do you calculate fuel cost?", "Miles divided by MPG, times the fuel price. The MPG "
+         "is interpolated between the EPA city and highway ratings using your city driving share."),
+        ("Which fuel price do you use?", "The latest EIA weekly US average is prefilled; override "
+         "it with your own local price."),
+        ("Does this include tax or registration?", "No — fuel cost only."),
+        ("Can I share my result?", "Yes, via the URL."),
+        ("Is this a quote?", "No, an estimate."),
+        ("Do you cover diesel?", "Not currently — the vehicle set here is petrol and hybrid only."),
+    ]
     content = [
         '<p class="eyebrow">Free · No signup · Runs in your browser</p>',
         '<h1>Petrol Cost Calculator</h1>',
@@ -493,26 +589,32 @@ def build(vehicles, energy, regions, out_root):
         '<p>EPA ratings are measured on a fixed cycle. Real economy moves with speed, terrain, load, '
         'tyres, temperature and trip length — short trips from cold are especially expensive. Use the '
         'city driving slider to match your own mix, and the winter switch for a cold-climate figure.</p>',
-        faq_block([
-            ("How do you calculate fuel cost?", "Miles divided by MPG, times the fuel price. The MPG "
-             "is interpolated between the EPA city and highway ratings using your city driving share."),
-            ("Which fuel price do you use?", "The latest EIA weekly US average is prefilled; override "
-             "it with your own local price."),
-            ("Does this include tax or registration?", "No — fuel cost only."),
-            ("Can I share my result?", "Yes, via the URL."),
-            ("Is this a quote?", "No, an estimate."),
-            ("Do you cover diesel?", "Not currently — the vehicle set here is petrol and hybrid only."),
-        ]),
+        faq_block(gas_faqs),
         sources_block(energy, regions, vehicles),
     ]
     write("/gas-cost-calculator/", render_page(
         "/gas-cost-calculator/", "Petrol Cost Calculator (2026)",
         "Estimate the monthly and annual fuel cost of a petrol car at your mileage and local fuel price.",
-        "".join(content)), out_root)
+        "".join(content),
+        jsonld=_ld_app_faq("Petrol Cost Calculator", "/gas-cost-calculator/",
+                           "Estimate petrol car running costs by monthly mileage and fuel price.", gas_faqs)), out_root)
     routes.append("/gas-cost-calculator/")
 
     # ---------------- four-way flagship ----------------
     four = [first_of(["ev"]), first_of(["phev"]), first_of(["hev"]), first_of(["gas"])]
+    four_faqs = [
+        ("Which drivetrain is cheapest to run?", "Usually a battery-electric car charged at home. "
+         "The ranking can change if you rely on public fast charging or drive mostly on the highway."),
+        ("What is a utility factor?", "For plug-in hybrids, the EPA's estimate of the share of "
+         "miles driven on electricity."),
+        ("Why is my plug-in hybrid so expensive here?", "Check the home charging switch — without "
+         "home charging a PHEV runs mostly on petrol."),
+        ("Do you include the purchase price?", "No — running cost only."),
+        ("Can I share this?", "Yes, via the URL."),
+        ("Is this a quote?", "No, an estimate."),
+        ("Does winter change the ranking?", "It compresses it — cold weather hurts electric range "
+         "more than petrol economy. Use the winter switch to see."),
+    ]
     content = [
         '<p class="eyebrow">Free · No signup · Runs in your browser</p>',
         '<h1>EV vs PHEV vs Hybrid vs Petrol — Running Cost Comparison</h1>',
@@ -531,26 +633,16 @@ def build(vehicles, energy, regions, out_root):
         '<p>It is still a <strong>running-cost</strong> comparison. It does not include purchase price, '
         'finance, insurance, maintenance, depreciation, tax or incentives, and it is not a '
         'whole-life ownership cost figure.</p>',
-        faq_block([
-            ("Which drivetrain is cheapest to run?", "Usually a battery-electric car charged at home. "
-             "The ranking can change if you rely on public fast charging or drive mostly on the highway."),
-            ("What is a utility factor?", "For plug-in hybrids, the EPA's estimate of the share of "
-             "miles driven on electricity."),
-            ("Why is my plug-in hybrid so expensive here?", "Check the home charging switch — without "
-             "home charging a PHEV runs mostly on petrol."),
-            ("Do you include the purchase price?", "No — running cost only."),
-            ("Can I share this?", "Yes, via the URL."),
-            ("Is this a quote?", "No, an estimate."),
-            ("Does winter change the ranking?", "It compresses it — cold weather hurts electric range "
-             "more than petrol economy. Use the winter switch to see."),
-        ]),
+        faq_block(four_faqs),
         sources_block(energy, regions, vehicles),
     ]
     write("/ev-vs-phev-vs-hybrid-vs-gas/", render_page(
         "/ev-vs-phev-vs-hybrid-vs-gas/",
         "EV vs PHEV vs Hybrid vs Petrol — Running Cost Comparison (2026)",
         "Compare the monthly running cost of battery-electric, plug-in hybrid, hybrid and petrol cars "
-        "on identical assumptions.", "".join(content)), out_root)
+        "on identical assumptions.", "".join(content),
+        jsonld=_ld_app_faq("EV vs PHEV vs Hybrid vs Petrol Comparison", "/ev-vs-phev-vs-hybrid-vs-gas/",
+                           "Compare monthly costs across EV, PHEV, hybrid and petrol cars.", four_faqs)), out_root)
     routes.append("/ev-vs-phev-vs-hybrid-vs-gas/")
 
     # ---------------- unit converter ----------------
@@ -577,28 +669,141 @@ def build(vehicles, energy, regions, out_root):
     for m in [20, 25, 30, 35, 40, 45, 50, 55, 60]:
         content.append(f'<tr><td>{m}</td><td>{235.214583 / m:.2f}</td>'
                        f'<td>{m + 5}</td><td>{235.214583 / (m + 5):.2f}</td></tr>')
+    conv_faqs = [
+        ("Which MPG does this use?", "US miles per gallon. Imperial (UK) gallons are about "
+         "20% larger, so UK MPG figures are not directly comparable."),
+        ("Why is L/100 km better for comparing cars?", "Because it is proportional to fuel "
+         "consumed. Differences in L/100 km map linearly to fuel bought, whereas MPG does not."),
+        ("How do I convert electric efficiency?", "Electric cars are usually quoted in "
+         "kWh per 100 miles or miles per kWh. The calculators on this site handle that directly."),
+        ("Is the conversion exact?", "Yes — it is a fixed constant, not an estimate."),
+        ("Can I use this for diesel?", "Yes, the unit conversion is fuel-agnostic."),
+        ("Do you convert cost as well?", "Not here — use the calculators, which price fuel "
+         "and electricity directly."),
+    ]
     content += ['</tbody></table></div>',
-                faq_block([
-                    ("Which MPG does this use?", "US miles per gallon. Imperial (UK) gallons are about "
-                     "20% larger, so UK MPG figures are not directly comparable."),
-                    ("Why is L/100 km better for comparing cars?", "Because it is proportional to fuel "
-                     "consumed. Differences in L/100 km map linearly to fuel bought, whereas MPG does not."),
-                    ("How do I convert electric efficiency?", "Electric cars are usually quoted in "
-                     "kWh per 100 miles or miles per kWh. The calculators on this site handle that directly."),
-                    ("Is the conversion exact?", "Yes — it is a fixed constant, not an estimate."),
-                    ("Can I use this for diesel?", "Yes, the unit conversion is fuel-agnostic."),
-                    ("Do you convert cost as well?", "Not here — use the calculators, which price fuel "
-                     "and electricity directly."),
-                ]),
+                faq_block(conv_faqs),
                 sources_block(energy, regions, vehicles)]
     write("/unit-converter/mpg-l100km/", render_page(
         "/unit-converter/mpg-l100km/", "MPG to L/100 km Converter",
         "Convert US MPG to litres per 100 km and back, with a reference table.",
-        "".join(content)), out_root)
+        "".join(content),
+        jsonld=_ld_app_faq("MPG to L/100 km Converter", "/unit-converter/mpg-l100km/",
+                           "Convert US MPG to litres per 100 km and back.", conv_faqs)), out_root)
     routes.append("/unit-converter/mpg-l100km/")
 
-    # ---------------- state pages ----------------
-    for code in STATES_10:
+    # ---------------- 50-state leaderboard hub ----------------
+    ev_ref = first_of(["ev"], "tesla-model-y-long-range-rwd")
+    gas_ref = first_of(["gas"], "toyota-rav4") or first_of(["gas"])
+
+    sorted_states = sorted(states.items(), key=lambda item: item[1]["usdPerKwh"])
+    cheapest_code, cheapest_st = sorted_states[0]
+    priciest_code, priciest_st = sorted_states[-1]
+
+    cheapest_ev_m = monthly_cost(ev_ref, base_p(cheapest_code))["monthly"]
+    priciest_ev_m = monthly_cost(ev_ref, base_p(priciest_code))["monthly"]
+    us_ev_m = monthly_cost(ev_ref, p0)["monthly"]
+    us_gas_m = monthly_cost(gas_ref, p0)["monthly"]
+    us_annual_save = (us_gas_m - us_ev_m) * 12
+
+    summary_cards = (
+        '<div class="leaderboard-summary">'
+        '<div class="leaderboard-stat is-highlight">'
+        '<div class="leaderboard-stat__label">Lowest Electricity Rate</div>'
+        f'<div class="leaderboard-stat__value">{esc(cheapest_st["name"])}</div>'
+        f'<div class="leaderboard-stat__sub">{money(cheapest_st["usdPerKwh"], "$", 4)}/kWh · ~{money(cheapest_ev_m)}/mo</div>'
+        '</div>'
+        '<div class="leaderboard-stat">'
+        '<div class="leaderboard-stat__label">US National Average</div>'
+        f'<div class="leaderboard-stat__value">{money(us_kwh, "$", 4)}</div>'
+        f'<div class="leaderboard-stat__sub">~{money(us_ev_m)}/mo ({esc(ev_ref["name"])})</div>'
+        '</div>'
+        '<div class="leaderboard-stat">'
+        '<div class="leaderboard-stat__label">Highest Electricity Rate</div>'
+        f'<div class="leaderboard-stat__value">{esc(priciest_st["name"])}</div>'
+        f'<div class="leaderboard-stat__sub">{money(priciest_st["usdPerKwh"], "$", 4)}/kWh · ~{money(priciest_ev_m)}/mo</div>'
+        '</div>'
+        '<div class="leaderboard-stat is-highlight">'
+        '<div class="leaderboard-stat__label">Average Annual EV Savings</div>'
+        f'<div class="leaderboard-stat__value">+{money(us_annual_save)}/yr</div>'
+        f'<div class="leaderboard-stat__sub">vs {esc(gas_ref["name"])} at {money(us_gas)}/gal</div>'
+        '</div>'
+        '</div>'
+    )
+
+    tbl_rows = []
+    for rank, (code, st) in enumerate(sorted_states, 1):
+        p_st = base_p(code)
+        r_ev_st = monthly_cost(ev_ref, p_st)
+        r_gas_st = monthly_cost(gas_ref, p_st)
+        save_yr = (r_gas_st["monthly"] - r_ev_st["monthly"]) * 12
+        rank_badge = f'<span class="rank-badge{" top-3" if rank <= 3 else ""}">{rank}</span>'
+        tbl_rows.append(
+            f'<tr>'
+            f'<td>{rank_badge}</td>'
+            f'<td><a href="/charging-cost/{code.lower()}/"><strong>{esc(st["name"])}</strong> ({code})</a></td>'
+            f'<td><code>{money(st["usdPerKwh"], "$", 4)}</code></td>'
+            f'<td>{money(r_ev_st["monthly"])}/mo</td>'
+            f'<td>{money(r_gas_st["monthly"])}/mo</td>'
+            f'<td class="win">+{money(save_yr)}/yr</td>'
+            f'</tr>'
+        )
+
+    hub_faqs = [
+        ("Which US state is the cheapest for EV charging?",
+         f"According to the latest EIA data, {cheapest_st['name']} has the lowest residential electricity rate at "
+         f"{money(cheapest_st['usdPerKwh'], '$', 4)} per kWh. Driving 1,000 miles a month in a {ev_ref['name']} "
+         f"costs only about {money(cheapest_ev_m)} per month."),
+        ("Which US state has the most expensive electricity?",
+         f"{priciest_st['name']} has the highest residential rate at {money(priciest_st['usdPerKwh'], '$', 4)} per kWh. "
+         f"Even in high-cost states, off-peak time-of-use (TOU) tariffs can significantly reduce home charging expenses."),
+        ("How much does the average American save by driving an EV?",
+         f"At the US national average of {money(us_kwh, '$', 4)}/kWh for electricity and {money(us_gas)}/gal for petrol, "
+         f"an EV saves approximately {money(us_annual_save)} per year in fuel over 12,000 miles compared to a 30 MPG petrol car."),
+        ("Where does this electricity pricing data come from?",
+         "All electricity rates are sourced from the U.S. Energy Information Administration (EIA) Form 861M "
+         "monthly electric utility sales reports."),
+    ]
+
+    hub_content = [
+        '<p class="eyebrow">Data & Rankings · 2026 Analysis</p>',
+        '<h1>EV Charging Cost by State: All 50 States Ranked (2026)</h1>',
+        f'<p class="lede">Residential electricity prices vary dramatically across America — from '
+        f'<strong>{money(cheapest_st["usdPerKwh"], "$", 4)}/kWh in {esc(cheapest_st["name"])}</strong> to '
+        f'<strong>{money(priciest_st["usdPerKwh"], "$", 4)}/kWh in {esc(priciest_st["name"])}</strong>. '
+        f'Here is the complete ranking of all 50 states and DC, showing what 1,000 miles per month costs in '
+        f'a {esc(ev_ref["name"])} compared to petrol.</p>',
+        rates_strip(energy, regions, f'<span><b>Rates updated:</b> {esc(el_period)}</span>'),
+        summary_cards,
+        '<h2>State-by-state electricity rates & charging cost comparison</h2>',
+        '<p>Ranked from lowest residential electricity rate to highest. Click any state to open its dedicated calculator '
+        'prefilled with that state\'s exact EIA rate and compare any electric or hybrid vehicle.</p>',
+        '<div class="table-scroll"><table class="table-state-rank">'
+        '<thead><tr><th>#</th><th>State</th><th>Electricity Rate</th><th>Monthly EV Cost</th><th>Monthly Petrol Cost</th><th>Annual Savings</th></tr></thead>'
+        f'<tbody>{"".join(tbl_rows)}</tbody></table></div>',
+        faq_block(hub_faqs),
+        '<h2>Popular calculators</h2>',
+        card_grid([
+            ('/ev-vs-gas-cost-calculator/', 'EV vs Gas Calculator', 'Head-to-head comparison'),
+            ('/tesla-charging-cost-calculator/', 'Tesla Charging Cost', 'Every current Tesla model'),
+            ('/ev-vs-phev-vs-hybrid-vs-gas/', 'Compare All Four', 'EV, PHEV, Hybrid and Petrol'),
+            ('/phev-charging-cost-calculator/', 'PHEV Calculator', 'Utility factor calculator'),
+        ]),
+        sources_block(energy, regions, vehicles),
+    ]
+
+    hub_route = "/charging-cost/"
+    write(hub_route, render_page(
+        hub_route, "EV Charging Cost by State (2026) — All 50 States Ranked",
+        "Ranked list of all 50 US states and DC by residential electricity rates, monthly EV charging costs, and annual petrol savings.",
+        "".join(hub_content),
+        jsonld=_ld_app_faq("EV Charging Cost by State — All 50 States Ranked", hub_route,
+                           "Compare EV charging costs and residential electricity rates across all 50 US states.",
+                           hub_faqs)), out_root)
+    routes.append(hub_route)
+
+    # ---------------- state pages (all 51 US states + DC) ----------------
+    for code in sorted(states.keys()):
         st = states[code]
         p_st = base_p(code)
         ev = first_of(["ev"], "tesla-model-y-long-range-rwd")
@@ -606,6 +811,25 @@ def build(vehicles, energy, regions, out_root):
         r_ev, r_gas = monthly_cost(ev, p_st), monthly_cost(gas, p_st)
         nat = states[code]["usdPerKwh"] / us_kwh - 1
         cmp_txt = ("above" if nat > 0 else "below") if abs(nat) > 0.005 else "in line with"
+        st_faqs = [
+            (f'What is the average electricity rate in {esc(st["name"])}?',
+             f'{money(st["usdPerKwh"], "$", 4)} per kWh for residential customers, per EIA Form '
+             f'861M for {esc(period_label(energy["sources"]["electricity"]["period"]))}.'),
+            (f'How much does it cost to charge an EV in {esc(st["name"])}?',
+             f'Around {money(r_ev["monthly"])} a month for 1,000 miles in a {esc(ev["name"])} at '
+             f'the state average rate, before any time-of-use discount.'),
+            ("Do I need a ZIP code?", "No — this page already prefills the state average."),
+            ("Can I put in my own rate?", "Yes — override the home rate field with your own tariff."),
+            ("Is this my actual bill?", "No. It is an estimate from state average data; your tariff "
+             "and usage will differ."),
+            ("How often is this updated?", "Electricity prices come from EIA's monthly state data."),
+        ]
+        other_states_cards = [
+            ('/charging-cost/', 'All 50 States Ranked', 'Complete US electricity & EV cost leaderboard'),
+        ] + [(f'/charging-cost/{o.lower()}/', states[o]['name'],
+              f"{money(states[o]['usdPerKwh'], '$', 4)}/kWh")
+             for o in STATES_10 if o != code][:5]
+
         content = [
             f'<p class="eyebrow">Free · No signup · Runs in your browser</p>',
             f'<h1>{esc(st["name"])} EV Charging Costs (2026)</h1>',
@@ -628,27 +852,13 @@ def build(vehicles, energy, regions, out_root):
             f'representative US average is around {money(dcfc)}/kWh. Some states require per-minute '
             f'pricing instead of per-kWh, and most networks add idle or session fees — so treat this as '
             f'an estimate rather than a quote.</p>',
-            faq_block([
-                (f'What is the average electricity rate in {esc(st["name"])}?',
-                 f'{money(st["usdPerKwh"], "$", 4)} per kWh for residential customers, per EIA Form '
-                 f'861M for {esc(period_label(energy["sources"]["electricity"]["period"]))}.'),
-                (f'How much does it cost to charge an EV in {esc(st["name"])}?',
-                 f'Around {money(r_ev["monthly"])} a month for 1,000 miles in a {esc(ev["name"])} at '
-                 f'the state average rate, before any time-of-use discount.'),
-                ("Do I need a ZIP code?", "No — this page already prefills the state average."),
-                ("Can I put in my own rate?", "Yes — override the home rate field with your own tariff."),
-                ("Is this my actual bill?", "No. It is an estimate from state average data; your tariff "
-                 "and usage will differ."),
-                ("How often is this updated?", "Electricity prices come from EIA's monthly state data."),
-            ]),
-            '<h2>Other states</h2>',
-            card_grid([(f'/charging-cost/{o.lower()}/', states[o]['name'],
-                        f"{money(states[o]['usdPerKwh'], '$', 4)}/kWh")
-                       for o in STATES_10 if o != code]),
+            faq_block(st_faqs),
+            '<h2>Compare with other states</h2>',
+            card_grid(other_states_cards),
             '<h2>Go further</h2>',
             card_grid([
-                ('/ev-vs-gas-cost-calculator/', 'EV vs Gas',
-                 f'The same comparison for {st["name"]}'),
+                ('/charging-cost/', 'All 50 States Ranked', 'See where your state stands nationwide'),
+                ('/ev-vs-gas-cost-calculator/', 'EV vs Gas', f'The same comparison for {st["name"]}'),
                 ('/tesla-charging-cost-calculator/', 'Tesla charging cost', 'Model by model'),
                 ('/', 'EV charging cost calculator', 'National average starting point'),
             ]),
@@ -660,11 +870,10 @@ def build(vehicles, energy, regions, out_root):
             f"Average residential electricity price in {st['name']} is "
             f"{money(st['usdPerKwh'], '$', 4)}/kWh. Estimate your EV charging cost per month.",
             "".join(content),
-            jsonld={"@context": "https://schema.org", "@type": "Dataset",
-                    "name": f"{st['name']} residential electricity price",
-                    "description": f"EIA Form 861M residential average price for {st['name']}.",
-                    "url": json.loads((gen.SRC / "config.json").read_text(encoding="utf-8"))["base"] + route,
-                    "variableMeasured": "Residential electricity price (USD/kWh)"}), out_root)
+            jsonld=_ld_state_page(
+                st['name'], route,
+                f"EIA Form 861M residential electricity price and EV charging cost estimate for {st['name']}.",
+                st_faqs)), out_root)
         routes.append(route)
 
     # ---------------- country pages ----------------
@@ -680,6 +889,20 @@ def build(vehicles, energy, regions, out_root):
         r_ev = monthly_cost(ev, p_c)
         mpk = mi_per_kwh(ev, 55, False)
         kwh100km = 100 / (mpk * 1.609344) if mpk else 0
+        c_faqs = [
+            (f'What is the average electricity price in {esc(c["name"])}?',
+             f'About {esc(c["rateDisplay"])} per kWh for residential customers, per '
+             f'{esc(c["source"])} ({esc(c["asOf"])}).'),
+            (f'How much does it cost to charge an EV in {esc(c["name"])}?',
+             f'Around {esc(c["symbol"])}{r_ev["monthly"]:.2f} a month over 1,000 miles at the '
+             f'average rate, depending on the car and your tariff.'),
+            ("Why are the car figures from the US EPA?", "Because it is the published, verifiable "
+             "dataset available to us. Override the rate and mileage with your own values."),
+            ("Can I use my own tariff?", "Yes — every price field is editable."),
+            ("Is this a quote?", "No. It is an estimate from published averages."),
+            ("Do you include standing charges?", f'No. {esc(c["name"])} tariffs commonly include a '
+             "daily standing charge that is not part of the unit rate."),
+        ]
         content = [
             f'<p class="eyebrow">Free · No signup · Runs in your browser</p>',
             f'<h1>EV Charging Cost {esc(c["name"])}</h1>',
@@ -703,20 +926,7 @@ def build(vehicles, energy, regions, out_root):
             f'{mpk:.2f} mi/kWh ({kwh100km:.1f} kWh/100 km), 1,000 miles a month costs about '
             f'{esc(c["symbol"])}{r_ev["monthly"]:.2f}.</p>',
             f'<p class="field__hint">{esc(c["note"])}</p>',
-            faq_block([
-                (f'What is the average electricity price in {esc(c["name"])}?',
-                 f'About {esc(c["rateDisplay"])} per kWh for residential customers, per '
-                 f'{esc(c["source"])} ({esc(c["asOf"])}).'),
-                (f'How much does it cost to charge an EV in {esc(c["name"])}?',
-                 f'Around {esc(c["symbol"])}{r_ev["monthly"]:.2f} a month over 1,000 miles at the '
-                 f'average rate, depending on the car and your tariff.'),
-                ("Why are the car figures from the US EPA?", "Because it is the published, verifiable "
-                 "dataset available to us. Override the rate and mileage with your own values."),
-                ("Can I use my own tariff?", "Yes — every price field is editable."),
-                ("Is this a quote?", "No. It is an estimate from published averages."),
-                ("Do you include standing charges?", f'No. {esc(c["name"])} tariffs commonly include a '
-                 "daily standing charge that is not part of the unit rate."),
-            ]),
+            faq_block(c_faqs),
             '<h2>Other countries</h2>',
             card_grid([(f"/ev-charging-cost/{o['code']}/", o['name'],
                         f"{o['rateDisplay']}/kWh")
@@ -733,7 +943,9 @@ def build(vehicles, energy, regions, out_root):
         write(route, render_page(
             route, f"EV Charging Cost {c['name']} ({c['rateDisplay']}/kWh)",
             f"Estimate EV charging cost in {c['name']} at the average residential rate of "
-            f"{c['rateDisplay']}/kWh.", "".join(content)), out_root)
+            f"{c['rateDisplay']}/kWh.", "".join(content),
+            jsonld=_ld_app_faq(f"EV Charging Cost {c['name']}", route,
+                               f"Estimate EV charging cost in {c['name']}.", c_faqs)), out_root)
         routes.append(route)
 
     return routes

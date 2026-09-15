@@ -308,12 +308,34 @@
     return out.join('');
   }
 
+  function costChart(list) {
+    if (!list || list.length < 2) return '';
+    var max_m = list.reduce(function (m, it) { return Math.max(m, it.r.monthly); }, 0) || 1;
+    var best = list.reduce(function (a, b) { return (a && a.r.monthly <= b.r.monthly) ? a : b; }, null);
+    var bars = list.map(function (it) {
+      var pct = Math.max(12, Math.min(100, Math.round((it.r.monthly / max_m) * 100)));
+      var isWin = it === best;
+      var badge = isWin ? '<span class="cost-bar__badge">Lowest</span>' : '';
+      return '<div class="cost-bar' + (isWin ? ' is-winner' : '') + '">' +
+        '<div class="cost-bar__header">' +
+        '<span class="cost-bar__name">' + esc(it.v.n) + ' ' + badge + '</span>' +
+        '<span class="cost-bar__val">' + money(it.r.monthly) + '/mo</span>' +
+        '</div>' +
+        '<div class="cost-bar__track">' +
+        '<div class="cost-bar__fill" style="width:' + pct + '%"></div>' +
+        '</div>' +
+        '</div>';
+    });
+    return '<div class="cost-chart"><div class="cost-chart__title">Monthly Cost Comparison</div>' + bars.join('') + '</div>';
+  }
+
   function resultCompare(list, p, url) {
     /* list: [{v, r}] */
     var out = [];
     var best = list.reduce(function (a, b) { return (a && a.r.monthly <= b.r.monthly) ? a : b; }, null);
     out.push('<p class="result-lead">' + money(best.r.monthly) + '<small> / month</small></p>');
     out.push('<p class="result-sub">Cheapest option: ' + esc(best.v.n) + '</p>');
+    out.push(costChart(list));
     out.push('<div class="compare"><table><thead><tr><th>Vehicle</th><th>Type</th>' +
              '<th>Month</th><th>Year</th><th>Per mile</th></tr></thead><tbody>');
     list.forEach(function (it) {
@@ -364,6 +386,7 @@
     return '<div class="calc__actions">' +
       '<button type="button" class="btn-sm beam" data-copy-link>Copy link to this result</button>' +
       '<button type="button" class="btn-sm beam" data-copy-summary>Copy summary</button>' +
+      '<button type="button" class="btn-sm btn--reddit" data-copy-reddit>Copy for Reddit</button>' +
       '</div>';
   }
 
@@ -670,6 +693,7 @@
 
       var cl = q('[data-copy-link]', resultsHost);
       var cs2 = q('[data-copy-summary]', resultsHost);
+      var cr = q('[data-copy-reddit]', resultsHost);
       if (cl) cl.addEventListener('click', function () { copyText(lastUrl).then(function () { flash(cl, 'Link copied'); }); });
       if (cs2) cs2.addEventListener('click', function () {
         var v0 = picks[0], r0 = FC.monthlyCost(v0, p);
@@ -678,6 +702,42 @@
           Math.round(p.milesPerMonth).toLocaleString() + ' miles/month, ' +
           p.homeRateUsdKwh.toFixed(4) + '/kWh. Estimate — ' + lastUrl;
         copyText(txt).then(function () { flash(cs2, 'Summary copied'); });
+      });
+      if (cr) cr.addEventListener('click', function () {
+        var lines = [];
+        lines.push('### ' + (mode === 'single' ? picks[0].n + ' Cost Estimate' : 'EV Charging & Fuel Cost Comparison'));
+        lines.push('*Assumptions: ' + Math.round(p.milesPerMonth).toLocaleString() + ' mi/mo | $' + p.homeRateUsdKwh.toFixed(4) + '/kWh electricity | $' + p.gasUsdPerGal.toFixed(2) + '/gal gas*');
+        lines.push('');
+        if (mode === 'single') {
+          var v0 = picks[0], r0 = FC.monthlyCost(v0, p);
+          lines.push('| Metric | Value |');
+          lines.push('| :--- | :--- |');
+          lines.push('| **Vehicle** | ' + v0.n + ' (' + catLabel(v0.c) + ') |');
+          lines.push('| **Monthly Cost** | **' + money(r0.monthly) + '** |');
+          lines.push('| **Annual Cost** | ' + money(r0.monthly * 12) + ' |');
+          lines.push('| **Per Mile** | ' + money(r0.monthly / (p.milesPerMonth || 1), null, 3) + ' |');
+          if (v0.c !== 'gas') lines.push('| **Energy Used** | ' + Math.round(r0.kwh).toLocaleString() + ' kWh/mo |');
+          if (r0.gallons > 0) lines.push('| **Fuel Used** | ' + r0.gallons.toFixed(1) + ' gal/mo |');
+        } else {
+          lines.push('| Vehicle | Type | Monthly | Annual | Per Mile |');
+          lines.push('| :--- | :--- | :--- | :--- | :--- |');
+          var best = picks.reduce(function (a, b) {
+            var ra = FC.monthlyCost(a, p), rb = FC.monthlyCost(b, p);
+            return (a && ra.monthly <= rb.monthly) ? a : b;
+          }, null);
+          picks.forEach(function (v) {
+            var r = FC.monthlyCost(v, p);
+            var isBest = v === best;
+            var name = isBest ? '**' + v.n + ' 🏆**' : v.n;
+            var m = isBest ? '**' + money(r.monthly) + '**' : money(r.monthly);
+            var a = isBest ? '**' + money(r.monthly * 12) + '**' : money(r.monthly * 12);
+            var pm = money(r.monthly / (p.milesPerMonth || 1), null, 3);
+            lines.push('| ' + name + ' | ' + catLabel(v.c) + ' | ' + m + ' | ' + a + ' | ' + pm + ' |');
+          });
+        }
+        lines.push('');
+        lines.push('*Generated via [EV Charging Cost Calculator](' + lastUrl + ')*');
+        copyText(lines.join('\n')).then(function () { flash(cr, 'Reddit table copied'); });
       });
     }
 
