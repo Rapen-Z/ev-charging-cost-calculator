@@ -1,0 +1,1119 @@
+/* ============================================================
+   EV Charging Cost Calculator — design system
+   ------------------------------------------------------------
+   Direction: Editorial / precision instrument.
+   The page reads like a printed spec sheet that happens to be
+   alive: warm paper, hairline rules, square corners, one deep
+   forest accent — and light that travels along the rules.
+
+   Deliberately NOT: centered hero, rounded card stacks, default
+   blue, puffy soft shadows, rainbow gradient borders.
+
+   Layers, in order:
+     1 tokens  →  2 base & typography  →  3 atmosphere
+     4 beam    →  5 orb               →  6 components
+     7 motion orchestration (reduced-motion safe throughout)
+   ============================================================ */
+
+/* ============================================================
+   1. TOKENS
+   Primitives first, then semantic aliases. Nothing below this
+   block hard-codes a colour, a duration or a spacing value.
+   ============================================================ */
+
+:root {
+  /* -- paper & ink: warm-tinted neutrals. Never pure #fff / #000:
+        real paper and real ink both carry a colour cast. -- */
+  --paper:        #fbfaf8;
+  --paper-2:      #f3f1ed;
+  --paper-3:      #ebe7e0;
+  --ink:          #16150f;   /* 18.0:1 on paper */
+  --ink-2:        #3d3b33;   /* 10.1:1 on paper */
+  --ink-3:        #6d6a60;   /*  5.2:1 on paper — still AA for body */
+  --ink-4:        #9a958a;   /*  decorative / disabled only        */
+  --rule:         #d8d4cb;
+  --rule-strong:  #b5b0a4;
+
+  /* -- brand: one dominant colour, per 60/30/10. Not default blue. -- */
+  --accent:       #124f3e;   /* deep forest — 9.1:1 on paper */
+  --accent-ink:   #0b3529;
+  --signal:       #3fae86;   /* beam mid  — verdigris               */
+  --signal-hot:   #7fe0bd;   /* beam core — the travelling highlight */
+  --signal-white: #f2fff9;   /* the hot head of the beam                */
+  --brass:        #b8862f;   /* beam tail — ties to the warning hue  */
+
+  /* -- semantic state -- */
+  --warn:         #7d4a06;
+  --warn-bg:      #fdf6e9;
+  --err:          #8f2f22;
+
+  /* -- type -- */
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --font-sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-2xs:  .72rem;
+  --fs-xs:   .78rem;
+  --fs-sm:   .875rem;
+  --fs-base: 1rem;
+  --fs-md:   1.125rem;
+  --fs-lg:   1.375rem;
+  --fs-xl:   1.75rem;
+  --fs-2xl:  clamp(1.85rem, 3.4vw, 2.3rem);
+  --fs-3xl:  clamp(2.1rem, 4.8vw, 3rem);
+  --fs-figure: clamp(2.1rem, 6vw, 3.1rem);
+
+  --lh-tight: 1.08;
+  --lh-snug:  1.28;
+  --lh-body:  1.65;
+  --track-tight: -.018em;
+  --track-wide:  .14em;
+
+  /* -- space: 4pt base. 8pt systems are too coarse to hit 12px. -- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* -- motion: 100/300/500 rule -- */
+  --dur-instant: 120ms;   /* press, toggle, colour change */
+  --dur-fast:    180ms;   /* hover */
+  --dur-base:    320ms;   /* panel, state change */
+  --dur-slow:    560ms;   /* entrance */
+  --ease-out:    cubic-bezier(.16, 1, .3, 1);
+  --ease-in:     cubic-bezier(.7, 0, .84, 0);
+  --ease-inout:  cubic-bezier(.65, 0, .35, 1);
+
+  /* -- beam geometry -- */
+  --beam-w: 2px;
+  --beam-idle: 26s;
+  --beam-live:  7s;
+  /* The glow is opt-in per component: 500+ index links carry a beam, and
+     only the handful that can actually light up should pay for a filter. */
+  --beam-glow: none;
+  --beam-glow-on: drop-shadow(0 0 3px rgb(63 174 134 / .55));
+
+  /* -- layout & depth -- */
+  --measure: 68ch;
+  --shell:   74rem;
+  --z-sticky: 20;
+  --z-cookie: 60;
+  --z-skip:  100;
+
+  /* Depth is carried by rules + surface tint, not by soft shadow.
+     The one exception is a tight halo under the beam — kept short
+     so it reads as emitted light, not as a drop shadow. */
+  --halo: 0 0 0 1px rgb(18 79 62 / .18), 0 0 16px -6px rgb(63 174 134 / .40);
+
+  /* -- semantic aliases: components reference these only -- */
+  --color-bg:      var(--paper);
+  --color-surface: var(--paper-2);
+  --color-raised:  var(--paper-3);
+  --color-text:    var(--ink);
+  --color-muted:   var(--ink-3);
+  --color-border:  var(--rule);
+  --color-accent:  var(--accent);
+
+  /* -- derived washes: every rgba below is expressed ONCE here so the
+       dark theme can retune them without hunting through components. -- */
+  --atmo-a:      rgb(18 79 62 / .055);    /* atmosphere wash, accent   */
+  --atmo-b:      rgb(184 134 47 / .045);  /* atmosphere wash, brass    */
+  --panel-wash:  rgb(243 241 237 / .55);  /* inputs panel top gradient */
+  --beam-arc-0:  rgb(18 79 62 / 0);       /* beam: transparent accent  */
+  --beam-arc-95: rgb(18 79 62 / .95);     /* beam: solid accent arc    */
+  --beam-tail:   rgb(184 134 47 / .85);   /* beam: brass tail          */
+  --sel-tint:    rgb(63 174 134 / .28);   /* ::selection               */
+}
+
+/* ------------------------------------------------------------
+   Dark theme — same identity, other side of the paper.
+   The palette keeps the warm cast (never neutral grey): a warm
+   near-black page with warm off-white ink, and an accent shifted
+   one step brighter so links and beams hold their contrast.
+   ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:        #14130e;
+    --paper-2:      #1d1b15;
+    --paper-3:      #272419;
+    --ink:          #ece8db;   /* 15.2:1 on paper */
+    --ink-2:        #c8c3b5;   /* 10.6:1 on paper */
+    --ink-3:        #98937f;   /*  6.0:1 on paper — still AA for body */
+    --ink-4:        #6b665a;
+    --rule:         #34312a;
+    --rule-strong:  #4d493c;
+
+    --accent:       #4ec596;   /* 8.6:1 on paper */
+    --accent-ink:   #8ce0ba;   /* hover runs brighter in the dark, not darker */
+    --brass:        #c99a4b;
+
+    --warn:         #d9a04c;
+    --warn-bg:      #2a2317;
+    --err:          #e0796a;
+
+    --atmo-a:      rgb(78 197 150 / .05);
+    --atmo-b:      rgb(201 154 75 / .04);
+    --panel-wash:  rgb(29 27 21 / .65);
+    --beam-arc-0:  rgb(78 197 150 / 0);
+    --beam-arc-95: rgb(78 197 150 / .95);
+    --beam-tail:   rgb(201 154 75 / .85);
+    --sel-tint:    rgb(63 174 134 / .34);
+
+    --halo: 0 0 0 1px rgb(78 197 150 / .30), 0 0 16px -6px rgb(63 174 134 / .45);
+  }
+  /* Noise over dark paper must ADD light, not subtract it. */
+  body::after { mix-blend-mode: overlay; opacity: .06; }
+}
+
+:root { color-scheme: light dark; }
+
+/* ============================================================
+   2. BASE & TYPOGRAPHY
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: var(--lh-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* No-JS users never see the calculator's preparing state. */
+.calc__boot { display: none; }
+.js .calc__boot { display: flex; }
+
+/* ---------- skip link ---------- */
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--ink); color: var(--paper);
+  padding: var(--sp-3) var(--sp-4); z-index: var(--z-skip);
+}
+.skip:focus { left: var(--sp-4); top: var(--sp-4); }
+
+/* ---------- masthead ---------- */
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  position: relative;
+  z-index: var(--z-sticky);
+}
+.masthead__inner {
+  max-width: var(--shell); margin: 0 auto;
+  padding: var(--sp-4) var(--sp-5);
+  display: flex; align-items: baseline; gap: var(--sp-5); flex-wrap: wrap;
+}
+.wordmark {
+  font-family: var(--font-serif);
+  font-size: 1.2rem; font-weight: 600; letter-spacing: .01em;
+  color: var(--ink); text-decoration: none;
+}
+.wordmark span { color: var(--accent); }
+.masthead nav { margin-left: auto; display: flex; gap: var(--sp-5); flex-wrap: wrap; }
+
+/* Nav links: the rule sweeps in from the left instead of just
+   toggling colour — a hover that rewards the pointer. */
+.masthead nav a {
+  position: relative;
+  font-size: var(--fs-xs); letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-2); text-decoration: none;
+  padding-bottom: 3px;
+}
+.masthead nav a::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.masthead nav a:hover { color: var(--ink); }
+.masthead nav a:hover::after { transform: scaleX(1); }
+.masthead nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ---------- layout ---------- */
+.wrap { max-width: var(--shell); margin: 0 auto; padding: 0 var(--sp-5); }
+main { padding: var(--sp-7) 0 var(--sp-8); }
+.measure { max-width: var(--measure); }
+
+/* Calculator pages use .doc: the page is full .wrap width, but long-form prose
+   is held at a readable measure. This is what fills the right half that used
+   to sit empty — the calculator and the card grids now span the full width. */
+.doc { max-width: var(--shell); }
+.doc > :is(h1, h2, p, .lede, .eyebrow, .rates, .notice, .sources, .faq, .result-grid, .table-scroll) {
+  max-width: var(--measure);
+}
+
+.eyebrow {
+  font-size: var(--fs-2xs); letter-spacing: var(--track-wide);
+  text-transform: uppercase; color: var(--ink-3);
+  margin: 0 0 var(--sp-3);
+}
+
+/* ---------- headings ----------
+   Hierarchy through three dimensions at once: size, weight and
+   the space above. h2 carries a rule with a short accent tick so
+   section starts are findable while scrolling. */
+h1 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-3xl);
+  line-height: var(--lh-tight); font-weight: 600;
+  letter-spacing: var(--track-tight);
+  margin: 0 0 var(--sp-2);
+  text-wrap: balance;
+}
+h2 {
+  position: relative;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl); line-height: var(--lh-snug); font-weight: 600;
+  letter-spacing: -.01em;
+  margin: var(--sp-7) 0 var(--sp-3);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--rule);
+  text-wrap: balance;
+}
+h2::before {
+  content: ""; position: absolute; top: -1px; left: 0;
+  width: 40px; height: 2px; background: var(--accent);
+}
+h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md); font-weight: 700; letter-spacing: .005em;
+  margin: var(--sp-6) 0 var(--sp-2);
+}
+h4 { font-size: .95rem; font-weight: 700; margin: var(--sp-5) 0 var(--sp-1); }
+
+p { margin: 0 0 var(--sp-4); }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: var(--accent-ink); }
+
+/* Selection carries the signal green — a small signature that
+   survives copy-paste screenshots. */
+::selection { background: var(--sel-tint); }
+
+ul, ol { margin: 0 0 var(--sp-4); padding-left: var(--sp-5); }
+li { margin: var(--sp-1) 0; }
+li > ul, li > ol { margin: var(--sp-1) 0; }
+
+strong { font-weight: 700; color: var(--ink); }
+
+blockquote {
+  margin: var(--sp-5) 0; padding: var(--sp-1) 0 var(--sp-1) var(--sp-4);
+  border-left: 3px solid var(--rule-strong);
+  color: var(--ink-2); font-size: .97rem;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--paper-2); padding: .12em .38em;
+  border: 1px solid var(--rule); border-radius: 2px;
+}
+pre {
+  background: var(--paper-2); border: 1px solid var(--rule);
+  padding: var(--sp-4); overflow-x: auto; border-radius: 2px;
+  font-family: var(--font-mono); font-size: .85rem; line-height: 1.55;
+}
+pre code { background: none; border: 0; padding: 0; }
+
+/* Numbers are data — always tabular so columns line up. */
+.result-lead, .result-cell dd, .compare td, .range-val, .savings strong,
+.meta b, .rates b, .card-grid .c-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- tables ---------- */
+.table-scroll { overflow-x: auto; margin: 0 0 var(--sp-5); }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td {
+  text-align: left; vertical-align: top;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+th {
+  font-size: var(--fs-2xs); letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700;
+  border-bottom: 1px solid var(--rule-strong); white-space: nowrap;
+}
+td:last-child, th:last-child { padding-right: 0; }
+
+/* ---------- meta strip ---------- */
+.meta {
+  display: flex; gap: var(--sp-5); flex-wrap: wrap;
+  font-size: var(--fs-xs); color: var(--ink-3);
+  padding-bottom: var(--sp-5); border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--sp-1);
+}
+.meta b { color: var(--ink-2); font-weight: 600; }
+
+/* ---------- notice (estimate / status) ---------- */
+.notice {
+  position: relative;
+  border: 1px solid var(--rule-strong);
+  background: var(--warn-bg);
+  color: var(--ink);
+  padding: var(--sp-3) var(--sp-4); margin: var(--sp-5) 0;
+  font-size: .93rem;
+}
+/* A 3px state rail replaces the old plain border-left. */
+.notice::before {
+  content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px;
+  width: 3px; background: var(--warn);
+}
+.notice--plain { background: var(--paper-2); }
+.notice--plain::before { background: var(--rule-strong); }
+.notice p:last-child { margin-bottom: 0; }
+
+/* ---------- affiliate disclosure ---------- */
+.affiliate-disclosure {
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: var(--sp-3) var(--sp-4); margin: var(--sp-5) 0;
+  font-size: .86rem; color: var(--ink-2);
+}
+.affiliate-disclosure[hidden] { display: none; }
+
+/* ---------- trademark notice ---------- */
+.tm-notice {
+  font-size: var(--fs-xs); color: var(--ink-3);
+  border-left: 3px solid var(--rule-strong);
+  padding-left: var(--sp-4); margin: var(--sp-6) 0;
+}
+
+/* ---------- footer ---------- */
+footer.site {
+  border-top: 2px solid var(--ink);
+  background: var(--paper);
+  margin-top: var(--sp-7); padding: var(--sp-6) 0 var(--sp-7);
+  font-size: var(--fs-sm); color: var(--ink-2);
+}
+footer.site .cols {
+  display: grid; gap: var(--sp-6) var(--sp-6);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+footer.site h4 {
+  font-size: var(--fs-2xs); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 var(--sp-2);
+}
+.legal-links { list-style: none; margin: 0; padding: 0; }
+.legal-links li { margin: var(--sp-1) 0; }
+.legal-links a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid transparent; }
+.legal-links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.legal-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.footer-legal {
+  margin-top: var(--sp-6); padding-top: var(--sp-4);
+  border-top: 1px solid var(--rule);
+  font-size: var(--fs-xs); color: var(--ink-3);
+  display: grid; gap: var(--sp-2);
+}
+.footer-legal p { margin: 0; }
+
+/* ---------- 404 ---------- */
+.notfound { padding: var(--sp-7) 0 var(--sp-8); }
+.notfound ul { margin-top: var(--sp-5); }
+
+/* ============================================================
+   3. ATMOSPHERE
+   Two very low-intensity layers so large paper fields do not read
+   as flat #fbfaf8. Intensity is deliberately near-invisible: the
+   paper identity has to survive.
+   ============================================================ */
+
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(52rem 30rem at 8% -12%, var(--atmo-a), transparent 62%),
+    radial-gradient(44rem 28rem at 104% 2%,  var(--atmo-b), transparent 58%);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  opacity: .035; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Keep content above the atmosphere without touching layout. */
+.masthead, main, footer.site { position: relative; z-index: 2; }
+
+/* ============================================================
+   4. BEAM — light travelling along a border
+   ------------------------------------------------------------
+   The reference effect is a rainbow glow riding a border. A
+   rainbow would collide head-on with this site's palette, so the
+   mechanism is kept and the material is swapped: a short arc of
+   the site's own accent → signal → brass, sweeping the perimeter.
+
+   Corners stay square — a beam tracing a rectangle reads as a
+   scanning instrument, where a glow around a pill reads as a
+   generic "AI card".
+
+   Implementation: conic-gradient + mask cut to a 1px ring, with
+   @property making the gradient angle interpolable. Where
+   @property is unsupported the beam simply does not rotate — it
+   degrades to a static gradient rather than breaking.
+   ============================================================ */
+
+@property --beam-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes beam-sweep { to { --beam-a: 360deg; } }
+
+.beam { position: relative; }
+
+.beam::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: var(--beam-w);
+  background: conic-gradient(
+    from var(--beam-a),
+    transparent             0turn,
+    transparent           .50turn,
+    var(--beam-arc-0)     .58turn,
+    var(--beam-arc-95)    .68turn,
+    var(--signal)         .77turn,
+    var(--signal-hot)     .84turn,
+    var(--signal-white)   .865turn,
+    var(--beam-tail)      .90turn,
+    transparent           .96turn,
+    transparent           1turn
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: var(--beam-glow);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* Mono variant: one hue only, for dense or repeated elements. */
+.beam--mono::before {
+  background: conic-gradient(
+    from var(--beam-a),
+    transparent          0turn,
+    transparent        .60turn,
+    var(--signal)       .78turn,
+    var(--signal-hot)   .85turn,
+    var(--signal-white) .88turn,
+    transparent        .93turn,
+    transparent         1turn
+  );
+}
+
+/* -- intensity steps: idle → on → live -- */
+.beam--idle::before { opacity: .75; animation: beam-sweep var(--beam-idle) linear infinite; }
+.beam--on::before   { opacity: .9;  animation: beam-sweep var(--beam-idle) linear infinite; }
+.beam--live::before { opacity: 1;   animation: beam-sweep var(--beam-live) linear infinite; }
+
+/* -- beam on the main instrument: always faintly alive, sharpens
+      when the visitor is actually working inside it -- */
+.calc.beam { --beam-glow: var(--beam-glow-on); }
+.calc.beam::before { opacity: .9; animation: beam-sweep var(--beam-idle) linear infinite; }
+.calc.beam:hover::before { opacity: 1; }
+.calc.beam:focus-within::before { opacity: 1; animation-duration: var(--beam-live); }
+.calc.beam:focus-within { box-shadow: var(--halo); }
+
+/* -- buttons: the beam is the hover state -- */
+.btn.beam::before, .btn-sm.beam::before {
+  background: conic-gradient(
+    from var(--beam-a),
+    transparent      0turn,
+    transparent    .55turn,
+    var(--signal)    .74turn,
+    var(--signal-hot) .82turn,
+    transparent    .92turn,
+    transparent     1turn
+  );
+  mix-blend-mode: screen;
+}
+.btn.beam:hover,
+.btn.beam:focus-visible,
+.btn-sm.beam:hover,
+.btn-sm.beam:focus-visible { --beam-glow: var(--beam-glow-on); }
+.btn.beam:hover::before,
+.btn.beam:focus-visible::before,
+.btn-sm.beam:hover::before,
+.btn-sm.beam:focus-visible::before {
+  opacity: 1; animation: beam-sweep var(--beam-live) linear infinite;
+}
+
+/* -- inputs: the beam marks the field that currently has focus, so at
+      most one light is ever running in the form. Text and number
+      controls only — range sliders and selects already signal state. -- */
+.field--beam { position: relative; --beam-glow: none; }
+.field--beam::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  padding: var(--beam-w);
+  background: conic-gradient(
+    from var(--beam-a),
+    transparent       0turn,
+    transparent     .6turn,
+    var(--signal)     .78turn,
+    var(--signal-hot) .84turn,
+    transparent      .92turn,
+    transparent       1turn
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: var(--beam-glow);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.field--beam:focus-within { --beam-glow: var(--beam-glow-on); }
+.field--beam:focus-within::before {
+  opacity: 1;
+  animation: beam-sweep var(--beam-live) linear infinite;
+}
+.field input:focus, .field select:focus {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+  border-color: var(--accent);
+  box-shadow: var(--halo);
+}
+
+/* -- cards, FAQ panels, converter -- */
+.card-grid a.beam::before { opacity: 0; }
+.card-grid a.beam:hover,
+.card-grid a.beam:focus-visible { --beam-glow: var(--beam-glow-on); }
+.card-grid a.beam:hover::before,
+.card-grid a.beam:focus-visible::before {
+  opacity: 1; animation: beam-sweep var(--beam-idle) linear infinite;
+}
+.converter.beam { --beam-glow: var(--beam-glow-on); }
+.converter.beam::before { opacity: .8; animation: beam-sweep var(--beam-idle) linear infinite; }
+.converter.beam:focus-within::before { opacity: 1; animation-duration: var(--beam-live); }
+.faq details[open].beam { --beam-glow: var(--beam-glow-on); }
+.faq details[open].beam::before { opacity: .85; animation: beam-sweep var(--beam-idle) linear infinite; }
+
+/* -- recompute flash: motion tied to a state change, not decoration.
+      Fires when the engine repaints a result block. -- */
+@keyframes beam-flash {
+  0%   { opacity: 0;   transform: scaleX(0); transform-origin: left; }
+  35%  { opacity: 1; }
+  100% { opacity: 0;   transform: scaleX(1); transform-origin: left; }
+}
+.calc__results.is-updated::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0;
+  height: 1px; background: linear-gradient(90deg, var(--accent), var(--signal-hot), transparent);
+  animation: beam-flash var(--dur-slow) var(--ease-out);
+}
+.calc__results { position: relative; }
+
+/* ============================================================
+   5. ORB — the thinking indicator
+   ------------------------------------------------------------
+   Replaces the spinner/skeleton. Used only where the wait is
+   real, never to disguise a fast operation:
+     · calculator hydrating before app.js mounts
+     · the ZIP → state lookup (first-party fetch)
+     · clipboard write
+   Styling here; drawing lives in assets/orb.js (canvas 2D).
+   ============================================================ */
+
+.orb {
+  display: inline-block;
+  flex: none;
+  position: relative;
+  width: var(--orb, 20px);
+  height: var(--orb, 20px);
+  vertical-align: -.18em;
+}
+.orb canvas { display: block; width: 100%; height: 100%; }
+.orb[data-orb-size="64"] { --orb: 64px; }
+.orb[data-orb-size="20"] { --orb: 20px; }
+
+/* Reduced motion: the orb keeps its visual identity as a static
+   ring, so the affordance survives without the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .orb::after {
+    content: ""; position: absolute; inset: 22%;
+    border: 1.5px solid var(--accent); border-radius: 50%;
+    opacity: .55;
+  }
+}
+
+/* -- inline status chip -- */
+.status {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-3);
+}
+.status[hidden] { display: none; }
+.status__text { font-variant-numeric: tabular-nums; }
+.status--busy .status__text { color: var(--accent); }
+.status--done .status__text { color: var(--accent-ink); }
+.status--fail .status__text { color: var(--err); }
+
+/* -- block-level preparing state -- */
+.calc__boot {
+  flex: 1;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-3); padding: var(--sp-6) var(--sp-4);
+  color: var(--ink-3); font-size: var(--fs-sm); text-align: center;
+}
+.calc__boot p { margin: 0; }
+
+/* ============================================================
+   6. COMPONENTS
+   ============================================================ */
+
+/* ---------- calculator shell ---------- */
+.calc {
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  margin: var(--sp-6) 0 var(--sp-5);
+}
+.calc__head {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap;
+}
+.calc__head h2 {
+  margin: 0; padding: 0; border: 0;
+  font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3);
+}
+.calc__head h2::before { content: none; }
+.calc__head .status { margin-left: auto; }
+.calc__body {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr) minmax(0, 18rem);
+  grid-template-areas: "inputs results aside";
+  gap: 0;
+}
+.calc__inputs { grid-area: inputs; }
+.calc__results { grid-area: results; }
+.calc__aside { grid-area: aside; }
+/* Below 1100px the reference panel drops to a full-width band under the
+   inputs/results pair, so it never squeezes the live numbers. */
+@media (max-width: 1100px) {
+  .calc__body {
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    grid-template-areas: "inputs results" "aside aside";
+  }
+}
+@media (max-width: 860px) {
+  .calc__body {
+    grid-template-columns: 1fr;
+    grid-template-areas: "inputs" "results" "aside";
+  }
+}
+
+.calc__inputs {
+  position: relative;
+  display: flex; flex-direction: column;
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  border-right: 1px solid var(--rule);
+  background: linear-gradient(180deg, var(--panel-wash), transparent 140px);
+}
+@media (max-width: 860px) {
+  .calc__inputs { border-right: 0; border-bottom: 1px solid var(--rule); }
+}
+
+/* ---------- reference panel (third column) ---------- */
+.calc__aside {
+  border-left: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  overflow: auto;
+}
+@media (max-width: 1100px) {
+  .calc__aside { border-left: 0; border-top: 1px solid var(--rule); }
+}
+.calc__aside h3 {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3);
+}
+.aside-legend { margin: 0 0 var(--sp-4); }
+.aside-legend dt {
+  font-weight: 700; color: var(--ink); font-size: .82rem;
+  margin-top: var(--sp-2);
+}
+.aside-legend dt:first-child { margin-top: 0; }
+.aside-legend dd { margin: 0; color: var(--ink-3); font-size: .82rem; line-height: 1.5; }
+.aside-tip {
+  border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  padding: var(--sp-3); background: var(--paper);
+  font-size: .82rem; line-height: 1.55; color: var(--ink-2);
+}
+.aside-tip strong { color: var(--ink); }
+
+/* ---------- fields ---------- */
+.field { margin-bottom: var(--sp-4); }
+.field > label, .field__label {
+  display: block;
+  font-size: var(--fs-xs); font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3);
+  margin-bottom: var(--sp-1);
+}
+.field input[type=number], .field input[type=text], .field select {
+  width: 100%; font: inherit; font-size: .95rem;
+  padding: .45rem .55rem; min-height: 42px;
+  border: 1px solid var(--rule-strong); border-radius: 2px;
+  background: var(--paper); color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.field input:hover, .field select:hover { border-color: var(--rule-strong); }
+.field input:focus, .field select:focus {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+/* Selects: the native arrow differs per browser and per OS — one
+   drawn chevron keeps the instrument face identical everywhere. */
+.field select {
+  -webkit-appearance: none; appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236d6a60' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .6rem center;
+  background-size: 10px 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2398937f' stroke-width='1.5'/%3E%3C/svg%3E");
+  }
+}
+.field--row { display: flex; gap: var(--sp-3); }
+.field--row > * { flex: 1; }
+
+/* Sliders are rebuilt as instrument controls: a hairline rail and a
+   ring thumb that tightens on hover and lights on focus. Native
+   accent-color never looked like the rest of the panel. */
+.field input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; min-height: 28px;
+  background: transparent; cursor: pointer;
+}
+.field input[type=range]::-webkit-slider-runnable-track {
+  height: 2px; background: var(--rule-strong); border-radius: 1px;
+}
+.field input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--accent);
+  margin-top: -6px;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.field input[type=range]:hover::-webkit-slider-thumb { border-color: var(--accent-ink); }
+.field input[type=range]:focus-visible { outline: none; }
+.field input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: var(--halo); }
+.field input[type=range]::-moz-range-track {
+  height: 2px; background: var(--rule-strong); border-radius: 1px;
+}
+.field input[type=range]::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--accent);
+}
+.field input[type=range]:hover::-moz-range-thumb { border-color: var(--accent-ink); }
+.field input[type=range]:focus-visible::-moz-range-thumb { box-shadow: var(--halo); }
+.range-val { font-weight: 700; color: var(--ink); }
+
+.check {
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  font-size: .9rem; color: var(--ink-2); margin-bottom: var(--sp-3);
+  cursor: pointer;
+}
+.check input {
+  width: 18px; height: 18px; margin-top: .18rem;
+  accent-color: var(--accent); flex: none;
+}
+.check:hover { color: var(--ink); }
+
+.field__hint { font-size: var(--fs-xs); color: var(--ink-3); margin: var(--sp-1) 0 0; }
+
+.calc__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-4); }
+
+/* ---------- buttons ---------- */
+.btn {
+  position: relative;
+  font: inherit; font-size: .9rem; font-weight: 600;
+  padding: .62rem 1.15rem; min-height: 44px;
+  border: 1px solid var(--ink); border-radius: 2px;
+  background: var(--ink); color: var(--paper);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              transform var(--dur-instant) var(--ease-out);
+}
+.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn--link {
+  background: none; border: 0; color: var(--accent);
+  padding: .62rem .3rem; text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn--link:hover { background: none; color: var(--accent-ink); }
+
+.btn-sm {
+  position: relative;
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  padding: .5rem .8rem; min-height: 40px;
+  border: 1px solid var(--ink); border-radius: 2px;
+  background: var(--paper); color: var(--ink); cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.btn-sm:hover { background: var(--ink); color: var(--paper); }
+.btn-sm[aria-busy="true"] { opacity: .75; cursor: progress; }
+
+/* ---------- results ---------- */
+.calc__results { padding: var(--sp-5) var(--sp-5) var(--sp-5); }
+
+/* The one number the page exists to deliver: largest type on the
+   page, tightest tracking, surrounded by space. */
+.result-lead {
+  font-family: var(--font-serif);
+  font-size: var(--fs-figure); line-height: 1.05;
+  font-weight: 600; letter-spacing: -.02em;
+  margin: 0 0 var(--sp-1);
+}
+.result-lead small { font-size: .3em; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
+.result-sub { font-size: var(--fs-sm); color: var(--ink-3); margin: 0 0 var(--sp-5); }
+
+.result-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0; border-top: 1px solid var(--rule);
+}
+.result-cell {
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.result-cell dt {
+  font-size: var(--fs-2xs); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700; margin-bottom: var(--sp-1);
+}
+.result-cell dd { margin: 0; font-size: 1.02rem; font-weight: 600; }
+
+.compare { border-top: 1px solid var(--rule); margin-top: var(--sp-4); padding-top: var(--sp-4); }
+.compare table { font-size: var(--fs-sm); }
+.compare td:last-child, .compare th:last-child { text-align: right; }
+.compare .win { font-weight: 700; color: var(--accent); }
+
+.savings {
+  margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-4);
+  background: var(--paper-2); border-left: 3px solid var(--accent);
+  font-size: .92rem;
+}
+
+.flag {
+  margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-4);
+  background: var(--warn-bg); border-left: 3px solid var(--warn);
+  font-size: var(--fs-sm);
+}
+
+.formula {
+  margin-top: var(--sp-5); border-top: 1px solid var(--rule); padding-top: var(--sp-4);
+  font-size: var(--fs-xs); color: var(--ink-3);
+}
+.formula code { display: block; white-space: pre-wrap; margin-top: var(--sp-2); font-size: .8rem; }
+
+/* ---------- rates strip ---------- */
+.rates {
+  display: flex; gap: var(--sp-5); flex-wrap: wrap;
+  font-size: var(--fs-xs); color: var(--ink-3);
+  border-top: 1px solid var(--rule); margin-top: var(--sp-5); padding-top: var(--sp-3);
+}
+.rates b { color: var(--ink-2); font-weight: 600; }
+
+/* ---------- index grids ---------- */
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0; margin: var(--sp-5) 0;
+  border-top: 1px solid var(--rule);
+}
+.card-grid a {
+  position: relative;
+  display: block; padding: var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none; color: var(--ink);
+  transition: background var(--dur-fast) var(--ease-out),
+              padding-left var(--dur-fast) var(--ease-out);
+}
+/* The hover is a two-part cue: the row tints AND nudges right —
+   the padding-left transition was already declared, now it earns
+   its keep. */
+.card-grid a:hover { background: var(--paper-2); padding-left: var(--sp-2); }
+.card-grid a:focus-visible { background: var(--paper-2); padding-left: var(--sp-2); }
+.card-grid .c-name { font-weight: 600; font-size: .95rem; display: block; }
+.card-grid .c-meta { font-size: .8rem; color: var(--ink-3); }
+
+/* ---------- FAQ ---------- */
+.faq { margin-top: var(--sp-7); }
+.faq details {
+  position: relative;
+  border-bottom: 1px solid var(--rule); padding: var(--sp-3) 0;
+}
+.faq summary {
+  cursor: pointer; font-weight: 600; font-size: .98rem;
+  list-style: none; display: flex; gap: var(--sp-2); align-items: baseline;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::before {
+  content: "+"; color: var(--accent); font-weight: 700;
+  transition: transform var(--dur-fast) var(--ease-out);
+  display: inline-block;
+}
+.faq summary:hover { color: var(--accent-ink); }
+.faq summary:hover::before { transform: scale(1.15); }
+.faq details[open] summary::before { content: "\2212"; }
+.faq details p {
+  margin: var(--sp-2) 0 0; font-size: .93rem; color: var(--ink-2);
+  animation: reveal-in var(--dur-base) var(--ease-out) both;
+}
+
+.sources { font-size: .8rem; color: var(--ink-3); margin-top: var(--sp-6); }
+.sources a { color: var(--ink-3); }
+
+/* ---------- unit converter ---------- */
+.converter {
+  border: 1px solid var(--rule-strong); padding: var(--sp-4);
+  margin: var(--sp-5) 0;
+}
+
+/* ---------- lede ---------- */
+.lede {
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: var(--measure);
+  margin: 0 0 var(--sp-5);
+  font-family: var(--font-serif);
+}
+.lede strong { color: var(--ink); }
+
+/* ---------- cookie banner ---------- */
+.cc-banner {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-cookie);
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+  box-shadow: 0 -1px 0 var(--rule);
+}
+.cc-banner[hidden] { display: none; }
+.cc-banner__inner {
+  max-width: var(--shell); margin: 0 auto; padding: var(--sp-4) var(--sp-5);
+  display: grid; gap: var(--sp-4);
+}
+.cc-banner__title {
+  font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600;
+  margin: 0 0 var(--sp-1);
+}
+.cc-banner__text { margin: 0; font-size: .9rem; color: var(--ink-2); max-width: 62ch; }
+.cc-banner__text a { color: var(--accent); }
+.cc-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+
+/* Equal-choice: Accept and Reject are visually identical (H group / §25 TDDDG) */
+.cc-manage { border-top: 1px solid var(--rule); padding-top: var(--sp-4); }
+.cc-manage[hidden] { display: none; }
+.cc-cat {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-3) 0; border-bottom: 1px solid var(--rule);
+  align-items: start;
+}
+.cc-cat:last-of-type { border-bottom: 0; }
+.cc-cat input { width: 18px; height: 18px; margin-top: .22rem; accent-color: var(--accent); }
+.cc-cat label { font-weight: 600; font-size: .92rem; }
+.cc-cat .cc-cat__desc { grid-column: 2; font-size: var(--fs-xs); color: var(--ink-3); margin: 0; }
+
+/* ---------- misc ---------- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   7. MOTION ORCHESTRATION
+   One staged entrance for the page body beats scattered
+   micro-interactions. Everything here is opt-in: with
+   prefers-reduced-motion the elements keep their natural
+   (visible) state and nothing moves.
+   ============================================================ */
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Staged page entrance. `backwards` fill means the element is
+     only hidden for the duration of its own delay — if the
+     animation is unavailable, content stays visible. */
+  @keyframes enter-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .measure > * {
+    animation: enter-up var(--dur-slow) var(--ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+  .measure > *:nth-child(1) { --i: 0; }
+  .measure > *:nth-child(2) { --i: 1; }
+  .measure > *:nth-child(3) { --i: 2; }
+  .measure > *:nth-child(4) { --i: 3; }
+  .measure > *:nth-child(5) { --i: 4; }
+  .measure > *:nth-child(n+6) { --i: 5; }  /* cap total stagger at ~350ms */
+}
+
+/* Reduced motion: freeze the beam on a fixed angle, keep the
+   halo (a state cue), drop every travel and stagger. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .beam::before,
+  .field--beam::before { animation: none !important; opacity: .9 !important; }
+  .field--beam:focus-within::before { opacity: 1 !important; }
+  .calc.beam:hover::before,
+  .calc.beam:focus-within::before { opacity: .8 !important; }
+  .btn.beam:hover::before, .btn.beam:focus-visible::before,
+  .btn-sm.beam:hover::before, .btn-sm.beam:focus-visible::before { opacity: .7 !important; }
+  .calc__results.is-updated::after { animation: none; opacity: 0; }
+  .measure > * { animation: none !important; }
+  .masthead nav a::after { transition: none; }
+  .field--signal::after { transition: none; }
+  .faq details p { animation: none; }
+  *, *::before, *::after { transition-duration: 1ms !important; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .masthead nav { margin-left: 0; width: 100%; }
+  .cc-actions .btn { flex: 1 1 auto; }
+  .calc__results { padding: var(--sp-4); }
+}
+
+@media (max-width: 400px) {
+  .masthead__inner { padding: var(--sp-3) var(--sp-4); }
+  .wrap { padding: 0 var(--sp-4); }
+}
+
+@media print {
+  .cc-banner, .masthead nav, .skip, .orb, .status { display: none !important; }
+  body { background: #fff; }
+  body::before, body::after { display: none; }
+  .beam::before { display: none; }
+}

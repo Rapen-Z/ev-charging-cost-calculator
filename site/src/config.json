@@ -1,0 +1,12 @@
+{
+  "domain": "evchargingcostcalculator.com",
+  "base": "https://evchargingcostcalculator.com",
+  "siteName": "EV Charging Cost Calculator",
+  "siteNameFirst": "EV Charging",
+  "siteNameRest": " Cost Calculator",
+  "operatingEntity": "[OPERATING ENTITY]",
+  "contactEmail": "[CONTACT EMAIL]",
+  "buildDate": "2026-09-10",
+  "affiliateEnabled": false,
+  "analyticsEnabled": false
+}

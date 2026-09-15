@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14130e" media="(prefers-color-scheme: dark)">
+<title>{{TITLE}} — {{SITE_NAME}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{BASE}}/{{CANONICAL}}">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{SITE_NAME}}">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:url" content="{{BASE}}/{{CANONICAL}}">
+<meta name="twitter:card" content="summary">
+<script>document.documentElement.className+=" js";</script>
+<link rel="stylesheet" href="/assets/styles.css">
+<script defer src="/assets/consent.js"></script>
+<script defer src="/assets/orb.js"></script>
+{{JSONLD}}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <a class="wordmark" href="/">{{SITE_NAME_FIRST}}<span>{{SITE_NAME_REST}}</span></a>
+    <nav aria-label="Legal">
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/cookie-policy">Cookie Policy</a>
+      <a href="/disclaimer">Disclaimer</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="measure">
+      {{CONTENT}}
+      {{TESLA_NOTICE}}
+      <div class="affiliate-disclosure" id="affiliate-disclosure" hidden>
+        <strong>Disclosure:</strong> some links on this page may be affiliate links, meaning we may earn a
+        commission if you purchase through them, at no additional cost to you.
+        <em>[Disabled — not rendered until Finance confirms affiliate categories and Legal approves wording.]</em>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h4>Legal</h4>
+        <ul class="legal-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/cookie-policy">Cookie Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>About</h4>
+        <ul class="legal-links">
+          <li><a href="/disclaimer">Disclaimer</a></li>
+          <li><a href="/about">About this site</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Your choices</h4>
+        <ul class="legal-links">
+          <li><button type="button" class="btn--link" id="cc-open" style="padding:0;background:none;border:0;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;">Cookie settings</button></li>
+          <li><a href="/privacy#your-rights">Your data rights</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-legal">
+      <p>All vehicle makes, models, and brand names are trademarks or registered trademarks of their respective
+      owners. Use of these names is for identification and descriptive purposes only and does not imply
+      affiliation or endorsement.</p>
+      <p>Estimates only. Figures are based on published average data and are not a quote, not a bill, and not legal,
+      financial, or professional advice. See the <a href="/disclaimer">Disclaimer</a>.</p>
+      <p>&copy; {{YEAR}} {{SITE_NAME}}. Operated by {{OPERATING_ENTITY}}.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var b = document.getElementById('cc-open');
+    if (b && window.CookieConsent) b.addEventListener('click', function () { window.CookieConsent.open(); });
+  });
+</script>
+</body>
+</html>
