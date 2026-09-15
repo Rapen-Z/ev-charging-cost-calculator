@@ -1,7 +1,12 @@
 # Cloudflare Workers config for the EV Charging Cost Calculator static site.
-# Deploys the built ./site directory via Workers Static Assets. The site's
+# Deploys the staged ./dist directory via Workers Static Assets. The site's
 # _redirects (308 aliases) and _headers (security headers) are handled NATIVELY
 # by Workers Static Assets; worker.js is a passthrough + future extension point.
+#
+# ./dist is produced by `python site/build.py` and contains ONLY the publishable
+# site (rendered HTML + assets + _redirects/_headers/robots/sitemap). Pointing
+# assets at ./site instead would also upload build.py, gen*.py, src/ and tests/
+# and expose the source tree at the site root — always deploy ./dist.
 #
 # REQUIRED before `wrangler deploy`:
 #   1) Authenticate:  run `wrangler login` on your machine, OR set an API token:
@@ -16,12 +21,14 @@
 #      The site currently references https://evchargingcostcalculator.com in
 #      robots.txt — set that domain there (or change robots.txt).
 
+#   3) Build then deploy:  python site/build.py  &&  wrangler deploy
+#      (build.py stages ./dist; wrangler uploads exactly that)
 name = "ev-charging-cost-calculator"
 main = "worker.js"
 compatibility_date = "2026-09-01"
 
 [assets]
-directory = "./site"
+directory = "./dist"
 binding = "ASSETS"
 html_handling = "auto-trailing-slash"
 not_found_handling = "404-page"

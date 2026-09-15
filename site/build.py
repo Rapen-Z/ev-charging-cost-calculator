@@ -282,7 +282,7 @@ def build() -> None:
     # assets
     assets = ROOT / "assets"
     assets.mkdir(exist_ok=True)
-    for f in ("styles.css", "consent.js", "calc.js", "app.js", "orb.js"):
+    for f in ("styles.css", "consent.js", "calc.js", "app.js", "orb.js", "favicon.svg"):
         shutil.copyfile(SRC / f, assets / f)
         print(f"  wrote assets/{f}")
 
@@ -546,7 +546,37 @@ def check() -> int:
     return 0
 
 
+# -------------------------------------------------------------------- stage ---
+
+# present in site/ for development, but must never be published. Serving them
+# at the site root would expose the build scripts, the templates and the tests.
+UNPUBLISHED = {"build.py", "gen.py", "gen_pages.py", "src", "tests", "__pycache__"}
+
+
+def stage() -> None:
+    """Mirror the publishable part of site/ into dist/, which is the directory
+    wrangler uploads. Rebuilt from scratch each time, so the deploy artefact is
+    exactly the verified site and nothing else."""
+    dist = ROOT.parent / "dist"
+    if dist.exists():
+        shutil.rmtree(dist)
+    dist.mkdir(parents=True)
+    copied = 0
+    for path in sorted(ROOT.rglob("*")):
+        rel = path.relative_to(ROOT)
+        if path.is_dir() or rel.parts[0] in UNPUBLISHED or path.suffix in (".py", ".pyc"):
+            continue
+        target = dist / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+        copied += 1
+    print(f"\nStaged {copied} publishable files -> dist/")
+
+
 if __name__ == "__main__":
     if "--check" not in sys.argv:
         build()
-    sys.exit(check())
+    code = check()
+    if code == 0 and "--check" not in sys.argv:
+        stage()
+    sys.exit(code)
