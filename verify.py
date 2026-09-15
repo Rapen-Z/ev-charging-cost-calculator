@@ -15,6 +15,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 PY = sys.executable
@@ -37,7 +42,7 @@ JSDOM_PATH = str(Path.home() / ".workbuddy" / "binaries" / "node" / "workspace" 
 
 def run(cmd, cwd, env=None, label=""):
     print(f"\n--- {label or ' '.join(cmd)} ---")
-    r = subprocess.run(cmd, cwd=str(cwd), env=env, capture_output=True, text=True)
+    r = subprocess.run(cmd, cwd=str(cwd), env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     out = (r.stdout or "") + (r.stderr or "")
     print(out.rstrip())
     return r.returncode, out
