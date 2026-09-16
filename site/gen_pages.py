@@ -159,6 +159,30 @@ def _ld_state_page(name, route, description, faqs=None):
             "description": description,
         },
         {
+            "@type": "BreadcrumbList",
+            "@id": url + "#breadcrumb",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": cfg["base"] + "/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "State Charging Costs",
+                    "item": cfg["base"] + "/charging-cost/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": name,
+                    "item": url
+                }
+            ]
+        },
+        {
             "@type": "Dataset",
             "@id": url + "#dataset",
             "name": f"{name} residential electricity price",
@@ -181,6 +205,71 @@ def _ld_state_page(name, route, description, faqs=None):
         "@context": "https://schema.org",
         "@graph": graph,
     }
+
+
+STATE_UTILITIES: dict[str, list[str]] = {
+    "AL": ["Alabama Power", "TVA (Tennessee Valley Authority)"],
+    "AK": ["Chugach Electric", "Golden Valley Electric (GVEA)", "Alaska Electric Light & Power"],
+    "AZ": ["Arizona Public Service (APS)", "Salt River Project (SRP)", "Tucson Electric Power (TEP)"],
+    "AR": ["Entergy Arkansas", "Electric Cooperatives of Arkansas", "SWEPCO"],
+    "CA": ["Pacific Gas & Electric (PG&E)", "Southern California Edison (SCE)", "San Diego Gas & Electric (SDG&E)", "SMUD"],
+    "CO": ["Xcel Energy", "United Power", "CORE Electric Cooperative", "Colorado Springs Utilities"],
+    "CT": ["Eversource Energy", "United Illuminating (UI)"],
+    "DE": ["Delmarva Power", "Delaware Electric Cooperative"],
+    "DC": ["Pepco (Potomac Electric Power Company)"],
+    "FL": ["Florida Power & Light (FPL)", "Duke Energy Florida", "Tampa Electric (TECO)", "JEA"],
+    "GA": ["Georgia Power", "Cobb EMC", "Jackson EMC", "Sawnee EMC"],
+    "HI": ["Hawaiian Electric (HECO/MECO/HELCO)", "Kauai Island Utility Cooperative (KIUC)"],
+    "ID": ["Idaho Power", "Avista", "Rocky Mountain Power"],
+    "IL": ["Commonwealth Edison (ComEd)", "Ameren Illinois"],
+    "IN": ["AES Indiana (IPL)", "Duke Energy Indiana", "NIPSCO", "CenterPoint Energy"],
+    "IA": ["MidAmerican Energy", "Alliant Energy (IPL)"],
+    "KS": ["Evergy Kansas", "Midwest Energy"],
+    "KY": ["LG&E and KU (Louisville Gas & Electric)", "Duke Energy Kentucky", "Kentucky Power"],
+    "LA": ["Entergy Louisiana", "Cleco Power", "SWEPCO"],
+    "ME": ["Central Maine Power (CMP)", "Versant Power"],
+    "MD": ["Baltimore Gas & Electric (BGE)", "Pepco", "Potomac Edison", "Delmarva Power"],
+    "MA": ["Eversource", "National Grid", "Unitil"],
+    "MI": ["DTE Energy", "Consumers Energy"],
+    "MN": ["Xcel Energy", "Minnesota Power", "Otter Tail Power"],
+    "MS": ["Mississippi Power", "Entergy Mississippi"],
+    "MO": ["Ameren Missouri", "Evergy Missouri"],
+    "MT": ["NorthWestern Energy", "Montana-Dakota Utilities"],
+    "NE": ["Nebraska Public Power District (NPPD)", "Omaha Public Power District (OPPD)", "Lincoln Electric System (LES)"],
+    "NV": ["NV Energy"],
+    "NH": ["Eversource New Hampshire", "Liberty Utilities", "Unitil"],
+    "NJ": ["Public Service Electric & Gas (PSE&G)", "Jersey Central Power & Light (JCP&L)", "Atlantic City Electric"],
+    "NM": ["Public Service Company of New Mexico (PNM)", "El Paso Electric", "Xcel Energy"],
+    "NY": ["Consolidated Edison (ConEd)", "National Grid", "PSEG Long Island", "NYSEG", "Rochester Gas & Electric (RG&E)", "Central Hudson"],
+    "NC": ["Duke Energy Carolinas", "Duke Energy Progress", "NCEMC Cooperatives"],
+    "ND": ["Montana-Dakota Utilities", "Otter Tail Power", "Xcel Energy"],
+    "OH": ["AEP Ohio", "Duke Energy Ohio", "FirstEnergy (Ohio Edison, Toledo Edison)", "AES Ohio"],
+    "OK": ["Oklahoma Gas & Electric (OG&E)", "Public Service Company of Oklahoma (PSO)"],
+    "OR": ["Portland General Electric (PGE)", "Pacific Power", "Eugene Water & Electric Board (EWEB)"],
+    "PA": ["PECO Energy", "PPL Electric Utilities", "Duquesne Light", "FirstEnergy (Met-Ed, Penelec, West Penn Power)"],
+    "RI": ["Rhode Island Energy"],
+    "SC": ["Duke Energy Carolinas", "Duke Energy Progress", "Dominion Energy South Carolina", "Santee Cooper"],
+    "SD": ["Black Hills Energy", "NorthWestern Energy", "Otter Tail Power", "Xcel Energy"],
+    "TN": ["Nashville Electric Service (NES)", "Memphis Light Gas & Water (MLGW)", "EPB Chattanooga", "Knoxville Utilities Board (KUB)"],
+    "TX": ["Oncor Electric Delivery", "CenterPoint Energy", "AEP Texas", "Texas-New Mexico Power (TNMP)"],
+    "UT": ["Rocky Mountain Power"],
+    "VT": ["Green Mountain Power (GMP)", "Vermont Electric Cooperative"],
+    "VA": ["Dominion Energy Virginia", "Appalachian Power (AEP)", "Northern Virginia Electric Cooperative (NOVEC)"],
+    "WA": ["Puget Sound Energy (PSE)", "Seattle City Light", "Avista", "Snohomish County PUD", "Tacoma Power"],
+    "WV": ["Appalachian Power", "Mon Power"],
+    "WI": ["We Energies", "Alliant Energy", "Wisconsin Public Service (WPS)", "Madison Gas & Electric (MGE)"],
+    "WY": ["Rocky Mountain Power", "Cheyenne Light Fuel & Power (Black Hills Energy)"],
+}
+
+COMPARE_VEHICLE_SLUGS: list[tuple[str, str]] = [
+    ("tesla-model-y-long-range-rwd", "EV SUV"),
+    ("tesla-model-3-premium-rwd", "EV Sedan"),
+    ("ford-f150-lightning-4wd", "EV Pickup"),
+    ("ford-escape-phev", "PHEV Compact SUV"),
+    ("toyota-camry-hybrid-le", "Hybrid Sedan"),
+    ("honda-cr-v-awd", "Gas Compact SUV"),
+    ("ford-explorer-awd", "Gas 3-Row SUV"),
+]
 
 
 # ------------------------------------------------------------------------ main
@@ -803,6 +892,9 @@ def build(vehicles, energy, regions, out_root):
     routes.append(hub_route)
 
     # ---------------- state pages (all 51 US states + DC) ----------------
+    state_rank_map = {c: idx + 1 for idx, (c, _) in enumerate(sorted_states)}
+    v_slug_map = by_slug(vehicles)
+
     for code in sorted(states.keys()):
         st = states[code]
         p_st = base_p(code)
@@ -811,19 +903,167 @@ def build(vehicles, energy, regions, out_root):
         r_ev, r_gas = monthly_cost(ev, p_st), monthly_cost(gas, p_st)
         nat = states[code]["usdPerKwh"] / us_kwh - 1
         cmp_txt = ("above" if nat > 0 else "below") if abs(nat) > 0.005 else "in line with"
+        diff_pct = nat * 100
+        diff_sign = "+" if diff_pct > 0 else ""
+
+        rank = state_rank_map[code]
+        if rank <= 5:
+            rank_tier = "Top 5 lowest in US"
+        elif rank <= 13:
+            rank_tier = "Lowest quartile (Q1)"
+        elif rank <= 26:
+            rank_tier = "Lower mid-range (Q2)"
+        elif rank <= 38:
+            rank_tier = "Upper mid-range (Q3)"
+        elif rank <= 46:
+            rank_tier = "Highest quartile (Q4)"
+        else:
+            rank_tier = "Top 5 highest in US"
+
+        ann_save = max(0, (r_gas["monthly"] - r_ev["monthly"]) * 12)
+
+        # Hero Stat Cards
+        hero_grid = (
+            f'<div class="state-hero-grid">'
+            f'<div class="state-stat">'
+            f'<div class="state-stat__label">Electricity Rate</div>'
+            f'<div class="state-stat__value">{money(st["usdPerKwh"], "$", 4)}<span style="font-size:var(--fs-xs);font-weight:normal;">/kWh</span></div>'
+            f'<div class="state-stat__sub">EIA Form 861M average</div>'
+            f'</div>'
+            f'<div class="state-stat">'
+            f'<div class="state-stat__label">National Rank</div>'
+            f'<div class="state-stat__value">#{rank} <span style="font-size:var(--fs-xs);font-weight:normal;">of 51</span></div>'
+            f'<div class="state-stat__sub">{rank_tier}</div>'
+            f'</div>'
+            f'<div class="state-stat">'
+            f'<div class="state-stat__label">Vs US Average</div>'
+            f'<div class="state-stat__value">{diff_sign}{diff_pct:.1f}%</div>'
+            f'<div class="state-stat__sub">US avg: {money(us_kwh, "$", 4)}/kWh</div>'
+            f'</div>'
+            f'<div class="state-stat is-highlight">'
+            f'<div class="state-stat__label">Est. Monthly EV Cost</div>'
+            f'<div class="state-stat__value">{money(r_ev["monthly"])}<span style="font-size:var(--fs-xs);font-weight:normal;">/mo</span></div>'
+            f'<div class="state-stat__sub">1,000 mi ({esc(ev["name"])})</div>'
+            f'</div>'
+            f'<div class="state-stat is-highlight">'
+            f'<div class="state-stat__label">Est. Annual Fuel Savings</div>'
+            f'<div class="state-stat__value">+{money(ann_save)}<span style="font-size:var(--fs-xs);font-weight:normal;">/yr</span></div>'
+            f'<div class="state-stat__sub">vs 30 MPG petrol car</div>'
+            f'</div>'
+            f'</div>'
+        )
+
+        # Cross-State Quick Switcher with adjacent rank links
+        prev_tuple = sorted_states[rank - 2] if rank > 1 else None
+        next_tuple = sorted_states[rank] if rank < len(sorted_states) else None
+
+        switcher_options = []
+        for c, s in sorted(states.items(), key=lambda x: x[1]["name"]):
+            c_rank = state_rank_map[c]
+            sel = ' selected="selected"' if c == code else ''
+            switcher_options.append(
+                f'<option value="/charging-cost/{c.lower()}/"{sel}>{esc(s["name"])} ({money(s["usdPerKwh"], "$", 4)}/kWh · #{c_rank})</option>'
+            )
+
+        adjacent_links = []
+        if prev_tuple:
+            p_code, p_st_obj = prev_tuple
+            adjacent_links.append(f'<a href="/charging-cost/{p_code.lower()}/">← #{rank - 1} {esc(p_st_obj["name"])} ({money(p_st_obj["usdPerKwh"], "$", 4)}/kWh)</a>')
+        adjacent_links.append('<a href="/charging-cost/">All 51 States Ranked</a>')
+        if next_tuple:
+            n_code, n_st_obj = next_tuple
+            adjacent_links.append(f'<a href="/charging-cost/{n_code.lower()}/">#{rank + 1} {esc(n_st_obj["name"])} ({money(n_st_obj["usdPerKwh"], "$", 4)}/kWh) →</a>')
+        adjacent_html = f'<div class="state-switcher-adjacent">{"".join(adjacent_links)}</div>'
+
+        switcher_html = (
+            f'<div class="state-switcher-card">'
+            f'<div class="state-switcher-inner">'
+            f'<div class="state-switcher-label">'
+            f'<span>Switch State:</span>'
+            f'<select class="state-switcher-select" aria-label="Select state" onchange="if(this.value) window.location.href=this.value">'
+            f'{"".join(switcher_options)}'
+            f'</select>'
+            f'</div>'
+            f'<div><a href="/charging-cost/" class="state-stat__sub" style="font-weight:600; text-decoration:underline;">View Complete 51-State Rankings →</a></div>'
+            f'</div>'
+            f'{adjacent_html}'
+            f'</div>'
+        )
+
+        # Multi-model cost table
+        compare_rows = []
+        for v_slug, v_label in COMPARE_VEHICLE_SLUGS:
+            veh = v_slug_map.get(v_slug)
+            if not veh:
+                continue
+            r_v = monthly_cost(veh, p_st)
+            m_cost = r_v["monthly"]
+            y_cost = m_cost * 12
+            pm_cost = m_cost / (p_st.get("milesPerMonth") or 1)
+            cat = veh["category"]
+            cat_badge = f'<span class="badge-powertrain {cat}">{esc(v_label)}</span>'
+            compare_rows.append(
+                f'<tr>'
+                f'<td><strong>{esc(veh["name"])}</strong></td>'
+                f'<td>{cat_badge}</td>'
+                f'<td><strong>{money(m_cost)}</strong>/mo</td>'
+                f'<td>{money(y_cost)}/yr</td>'
+                f'<td>{money(pm_cost, "$", 3)}/mi</td>'
+                f'</tr>'
+            )
+
+        model_table_html = (
+            f'<h2>{esc(st["name"])} Charging Costs Across 7 Popular Vehicle Types</h2>'
+            f'<p>Estimated monthly and annual costs for 1,000 miles per month at {esc(st["name"])}\'s average residential electricity rate '
+            f'({money(st["usdPerKwh"], "$", 4)}/kWh) and petrol price ({money(us_gas)}/gal):</p>'
+            f'<div class="table-scroll"><table class="model-cost-table">'
+            f'<thead><tr><th>Vehicle Model</th><th>Type</th><th>Est. Monthly</th><th>Est. Annual</th><th>Cost Per Mile</th></tr></thead>'
+            f'<tbody>{"".join(compare_rows)}</tbody>'
+            f'</table></div>'
+        )
+
+        # Local Utilities & Charging Guidance Card
+        utilities = STATE_UTILITIES.get(code, [])
+        util_tags = "".join(f'<span class="utility-tag">{esc(u)}</span>' for u in utilities)
+        utility_card_html = (
+            f'<div class="utility-card">'
+            f'<h3>Major Electric Utilities in {esc(st["name"])}</h3>'
+            f'<p>Residential electricity rates vary across service areas. Primary electric utilities serving {esc(st["name"])} include:</p>'
+            f'<div class="utility-tags">{util_tags}</div>'
+            f'<p class="utility-tip">'
+            f'<strong>Tip:</strong> Many utilities in {esc(st["name"])} offer specialized time-of-use tariffs or off-peak EV charging schedules. '
+            f'Charging overnight during off-peak hours (commonly 11 PM to 6 AM) can lower your home charging expenses significantly '
+            f'compared to the state average residential tariff of {money(st["usdPerKwh"], "$", 4)}/kWh. '
+            f'Check with your electric utility provider to explore available EV-friendly rate plans.'
+            f'</p>'
+            f'</div>'
+        )
+
+        # Localized FAQs
         st_faqs = [
-            (f'What is the average electricity rate in {esc(st["name"])}?',
-             f'{money(st["usdPerKwh"], "$", 4)} per kWh for residential customers, per EIA Form '
-             f'861M for {esc(period_label(energy["sources"]["electricity"]["period"]))}.'),
-            (f'How much does it cost to charge an EV in {esc(st["name"])}?',
+            (f'What is the average residential electricity rate in {esc(st["name"])}?',
+             f'{money(st["usdPerKwh"], "$", 4)} per kWh, according to U.S. EIA Form 861M data '
+             f'for {esc(period_label(energy["sources"]["electricity"]["period"]))}. '
+             f'This ranks {esc(st["name"])} #{rank} out of 51 jurisdictions nationwide ({rank_tier.lower()}).'),
+            (f'How much does it cost to charge an electric car monthly in {esc(st["name"])}?',
              f'Around {money(r_ev["monthly"])} a month for 1,000 miles in a {esc(ev["name"])} at '
-             f'the state average rate, before any time-of-use discount.'),
-            ("Do I need a ZIP code?", "No — this page already prefills the state average."),
-            ("Can I put in my own rate?", "Yes — override the home rate field with your own tariff."),
-            ("Is this my actual bill?", "No. It is an estimate from state average data; your tariff "
-             "and usage will differ."),
-            ("How often is this updated?", "Electricity prices come from EIA's monthly state data."),
+             f'{esc(st["name"])}\'s average rate of {money(st["usdPerKwh"], "$", 4)}/kWh, before any off-peak utility discounts.'),
+            (f'How does EV charging compare to petrol fuel costs in {esc(st["name"])}?',
+             f'Driving 1,000 miles in an electric vehicle in {esc(st["name"])} costs about {money(r_ev["monthly"])}, '
+             f'compared to approximately {money(r_gas["monthly"])} in a 30 MPG petrol car at {money(us_gas)}/gallon — '
+             f'saving roughly {money(ann_save)} per year.'),
+            (f'Which electric utilities serve {esc(st["name"])}?',
+             f'Major electric providers in {esc(st["name"])} include {", ".join(utilities[:3])}'
+             + (f' and others.' if len(utilities) > 3 else '.') +
+             f' Many offer off-peak EV charging incentives and time-of-use tariffs.'),
+            (f'Can I calculate with my own electricity tariff?',
+             'Yes — you can enter your exact utility bill rate into the interactive calculator above to see your customized monthly estimate.'),
+            (f'Are public fast charging prices included in this state average?',
+             f'No. Residential rates reflect home charging ({money(st["usdPerKwh"], "$", 4)}/kWh). Public DC fast charging networks '
+             f'typically average around {money(dcfc)}/kWh nationwide and vary by network and station location.'),
         ]
+
+        # Other states cards
         other_states_cards = [
             ('/charging-cost/', 'All 50 States Ranked', 'Complete US electricity & EV cost leaderboard'),
         ] + [(f'/charging-cost/{o.lower()}/', states[o]['name'],
@@ -831,13 +1071,15 @@ def build(vehicles, energy, regions, out_root):
              for o in STATES_10 if o != code][:5]
 
         content = [
-            f'<p class="eyebrow">Free · No signup · Runs in your browser</p>',
+            '<p class="eyebrow">Free · No signup · Runs in your browser</p>',
             f'<h1>{esc(st["name"])} EV Charging Costs (2026)</h1>',
             f'<p class="lede">The average residential electricity price in {esc(st["name"])} is '
             f'<strong>{money(st["usdPerKwh"], "$", 4)} per kWh</strong> — '
-            f'{abs(nat) * 100:.0f}% {cmp_txt} the US average of {money(us_kwh, "$", 4)}/kWh. '
-            f'Here is what that means per month.</p>',
+            f'{abs(nat) * 100:.0f}% {cmp_txt} the US average of {money(us_kwh, "$", 4)}/kWh (Ranked <strong>#{rank} of 51</strong>). '
+            f'Here is how much it costs to charge an electric car in {esc(st["name"])} per month and per year.</p>',
             rates_strip(energy, regions, f'<span><b>Rates updated:</b> {esc(el_period)}</span>'),
+            hero_grid,
+            switcher_html,
             calc_widget({"mode": "compare", "groups": json.dumps([["ev"], ["gas"]]),
                          "vehicle-a": ev["slug"], "vehicle-b": gas["slug"],
                          "state": code, "show": ALL_SHOW},
@@ -847,6 +1089,8 @@ def build(vehicles, energy, regions, out_root):
             f'{money(r_ev["monthly"])} a month over 1,000 miles — roughly '
             f'{money(r_ev["monthly"] / 1000, "$", 3)} per mile. The same distance in the '
             f'{esc(gas["name"])} at {money(us_gas)}/gallon costs about {money(r_gas["monthly"])}.</p>',
+            model_table_html,
+            utility_card_html,
             '<h2>What public fast charging costs here</h2>',
             f'<p>Public DC fast charging is priced by the network, not by the state, and a '
             f'representative US average is around {money(dcfc)}/kWh. Some states require per-minute '
@@ -866,9 +1110,9 @@ def build(vehicles, energy, regions, out_root):
         ]
         route = f"/charging-cost/{code.lower()}/"
         write(route, render_page(
-            route, f"{st['name']} EV Charging Costs (2026)",
+            route, f"{st['name']} EV Charging Costs (2026) — Rates & Monthly Cost",
             f"Average residential electricity price in {st['name']} is "
-            f"{money(st['usdPerKwh'], '$', 4)}/kWh. Estimate your EV charging cost per month.",
+            f"{money(st['usdPerKwh'], '$', 4)}/kWh (Rank #{rank} of 51). Compare 7 EV and gas models and estimate monthly charging costs.",
             "".join(content),
             jsonld=_ld_state_page(
                 st['name'], route,
