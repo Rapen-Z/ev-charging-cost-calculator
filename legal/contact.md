@@ -11,11 +11,9 @@ updated: 2026-09-10
 
 ## Email
 
-**[CONTACT EMAIL]**
+**[support@evchargingcost.online](mailto:support@evchargingcost.online)**
 
-We aim to reply within **[TO BE CONFIRMED: target response time]** business days.
-
-> **Placeholder notice (must be replaced before launch):** the address above must be a **real, monitored mailbox on this domain** before the site goes live. A placeholder, a non-deliverable address, or a free webmail address presented as an official contact is a misrepresentation and can cause affiliation, advertising, and consumer-protection problems.
+We aim to reply within 1–2 business days.
 
 ## What to contact us about
 
@@ -40,7 +38,7 @@ If a vehicle efficiency figure, electricity rate, or fuel price looks wrong or o
 
 ### Legal, trademark and attribution
 
-For trademark or attribution concerns: **[CONTACT EMAIL]**. We act on valid notices promptly. We do not use manufacturer logos and we name vehicles only to identify them descriptively.
+For trademark or attribution concerns: **support@evchargingcost.online**. We act on valid notices promptly. We do not use manufacturer logos and we name vehicles only to identify them descriptively.
 
 ### Complaints
 
@@ -50,7 +48,7 @@ If you are unhappy with our response, you can escalate:
 - **United Kingdom:** complain to the Information Commissioner's Office (ICO). Under the Data (Use and Access) Act 2025, controllers are required to operate a complaints procedure and acknowledge complaints — we follow that process.
 - **California:** contact the California Privacy Protection Agency or the California Attorney General.
 
-You can also reach us first at **[CONTACT EMAIL]** and we will try to resolve it directly.
+You can also reach us first at **support@evchargingcost.online** and we will try to resolve it directly.
 
 ## What we cannot help with
 

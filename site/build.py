@@ -261,6 +261,8 @@ def render_page(title, route, description, updated, content, tesla=False, is_con
         .replace("{{SITE_NAME_REST}}", CONFIG["siteNameRest"])
         .replace("{{YEAR}}", YEAR)
         .replace("{{OPERATING_ENTITY}}", html.escape(CONFIG["operatingEntity"], quote=False))
+        .replace("{{CONTACT_EMAIL}}", CONFIG["contactEmail"])
+        .replace("[CONTACT EMAIL]", CONFIG["contactEmail"])
         .replace("{{CONTENT}}", content)
         .replace("{{TESLA_NOTICE}}", TESLA_NOTICE if tesla else "")
         .replace("{{JSONLD}}", jsonld(title, route, description, is_contact) + extra_head)
@@ -414,7 +416,7 @@ def build() -> None:
         "",
         "## Legal & About",
         f"- [About Us]({BASE}/about): Mission, author, and calculation methodology.",
-        f"- [Contact]({BASE}/contact): Inquiries and feedback.",
+        f"- [Contact]({BASE}/contact): Inquiries and feedback (support@evchargingcost.online).",
         f"- [Privacy Policy]({BASE}/privacy): In-browser data processing and privacy practices.",
         f"- [Terms of Service]({BASE}/terms): Terms of usage.",
         f"- [Cookie Policy]({BASE}/cookie-policy): Cookie disclosures.",

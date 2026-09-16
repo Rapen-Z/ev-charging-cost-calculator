@@ -80,4 +80,4 @@ Everything on this site is general information for comparison purposes. It is no
 
 ## Get in touch
 
-**[CONTACT EMAIL]** — or use the [Contact page](/contact).
+**[support@evchargingcost.online](mailto:support@evchargingcost.online)** — or use the [Contact page](/contact).

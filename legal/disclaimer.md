@@ -65,4 +65,4 @@ Nothing on this site is legal advice. The legal and policy pages on this site de
 
 ## Contact
 
-Corrections and questions: **[CONTACT EMAIL]** — see also our [Terms of Service](/terms) and [Privacy Policy](/privacy).
+Corrections and questions: **[support@evchargingcost.online](mailto:support@evchargingcost.online)** — see also our [Terms of Service](/terms) and [Privacy Policy](/privacy).

@@ -33,7 +33,7 @@ You do not need to register, log in, or pay to use this site.
 
 If that ever changes, this section will be updated and a refund policy will be published before any payment functionality goes live.
 
-If you believe you have been charged by something claiming to be this site, please contact **[CONTACT EMAIL]** immediately — it is likely fraudulent.
+If you believe you have been charged by something claiming to be this site, please contact **support@evchargingcost.online** immediately — it is likely fraudulent.
 
 ## 5. Acceptable use
 
@@ -105,4 +105,4 @@ We will update the "Last updated" date when these terms change. Continuing to us
 
 ## 15. Contact
 
-Questions about these terms: **[CONTACT EMAIL]** — or use the [Contact page](/contact).
+Questions about these terms: **[support@evchargingcost.online](mailto:support@evchargingcost.online)** — or use the [Contact page](/contact).

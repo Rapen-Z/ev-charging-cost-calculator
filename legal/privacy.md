@@ -18,9 +18,9 @@ updated: 2026-09-10
 
 ## Who we are
 
-This site is operated by **[OPERATING ENTITY]**, reachable at **[CONTACT EMAIL]**.
+This site is operated by **[OPERATING ENTITY]**, reachable at **[support@evchargingcost.online](mailto:support@evchargingcost.online)**.
 
-> **Placeholder notice (must be replaced before launch):** `[OPERATING ENTITY]` and `[CONTACT EMAIL]` are placeholders. They must be replaced with the real operating entity and a working domain-email address before this site goes live. Publishing a privacy policy with a placeholder or non-existent contact address is a misrepresentation and may breach consumer-protection rules and platform/affiliate programme requirements.
+> **Placeholder notice:** `[OPERATING ENTITY]` is a placeholder pending formal operating entity registration.
 
 ## Information we handle
 
@@ -157,6 +157,6 @@ We will update the "Last updated" date when this policy changes. If a change mat
 
 ## Contact
 
-Questions, requests, or complaints: **[CONTACT EMAIL]**
+Questions, requests, or complaints: **[support@evchargingcost.online](mailto:support@evchargingcost.online)**
 
 You can also use the [Contact page](/contact).

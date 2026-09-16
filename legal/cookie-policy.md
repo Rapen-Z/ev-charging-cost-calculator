@@ -67,4 +67,4 @@ We will update this page whenever the cookies or similar technologies in use cha
 
 ## Contact
 
-Questions about cookies: **[CONTACT EMAIL]** — see also our [Privacy Policy](/privacy).
+Questions about cookies: **[support@evchargingcost.online](mailto:support@evchargingcost.online)** — see also our [Privacy Policy](/privacy).
