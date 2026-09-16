@@ -249,7 +249,7 @@ TESLA_NOTICE = (
 
 
 def render_page(title, route, description, updated, content, tesla=False, is_contact=False, extra_head=""):
-    canonical = "" if route == "/" else route
+    canonical = route
     head = LAYOUT
     html_out = (
         LAYOUT.replace("{{TITLE}}", html.escape(title, quote=False))
@@ -362,6 +362,66 @@ def build() -> None:
 
     # robots.txt
     write(ROOT / "robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n")
+
+    # llm.txt for AI/LLM indexing and discovery
+    llm_lines = [
+        f"# {SITE_NAME}",
+        "",
+        "> Comprehensive EV, PHEV, hybrid, and petrol charging and fuel cost calculator based on official U.S. EPA and EIA Form 861M data across all 50 U.S. states and DC.",
+        "",
+        "## Overview",
+        f"{SITE_NAME} ({BASE}) is a free, real-time web calculator for estimating and comparing electric vehicle charging costs, gas costs, plug-in hybrid (PHEV) fuel splits, and hybrid vehicle operating costs. All energy prices are grounded in U.S. Energy Information Administration (EIA Form 861M residential electricity, weekly retail gasoline) and U.S. Environmental Protection Agency (EPA Model Year 2026 fueleconomy.gov) datasets.",
+        "",
+        "## Core Calculators",
+        f"- [Universal EV Charging Cost Calculator]({BASE}/): Estimate monthly and annual home and public charging costs for any EV, PHEV, hybrid, or gas vehicle. Includes efficiency, electric rates, charging loss, and winter temperature penalty controls.",
+        f"- [Tesla Charging Cost Calculator]({BASE}/tesla-charging-cost-calculator/): Specialized charging cost calculator for Tesla Model 3, Model Y, Model S, Model X, and Cybertruck across standard range, long range, and performance trims.",
+        f"- [EV vs Gas Cost Calculator]({BASE}/ev-vs-gas-cost-calculator/): Direct side-by-side fuel comparison between battery electric vehicles and gas-powered vehicles with monthly dollar savings and annual fuel economics.",
+        f"- [PHEV Charging Cost Calculator]({BASE}/phev-charging-cost-calculator/): Plug-in hybrid calculator implementing the SAE J2841 / EPA Utility Factor curve to split electric miles from gasoline miles.",
+        f"- [EV vs PHEV vs Hybrid vs Gas Comparison]({BASE}/ev-vs-phev-vs-hybrid-vs-gas/): Comprehensive 4-way vehicle powertrain comparison for total monthly and annual fuel expenditures.",
+        "",
+        "## 50-State Electricity & Charging Cost Index",
+        f"- [US State EV Charging Cost Leaderboard]({BASE}/charging-cost/): Interactive ranking and comparison of all 50 U.S. states and the District of Columbia by residential electricity rate, monthly EV charging cost per 1,000 miles, and equivalent gas mileage cost.",
+        "State profiles:",
+    ]
+    for code, info in sorted(energy.get("states", {}).items()):
+        name = info.get("name", code)
+        cents = info.get("centsPerKwh", 0)
+        llm_lines.append(f"- [{name} EV Charging Cost]({BASE}/charging-cost/{code.lower()}/): {name} residential electricity rate average of {cents:.2f}¢/kWh.")
+    llm_lines += [
+        "",
+        "## Popular Vehicle Models Included",
+        "- Tesla: Model 3 (Standard RWD, Long Range, Performance), Model Y (RWD, Long Range AWD, Performance), Model S (Dual Motor, Plaid), Model X, Cybertruck (AWD, Cyberbeast)",
+        "- Ford: Mustang Mach-E (Select, Premium, GT), F-150 Lightning (Pro, Flash, Lariat, Platinum)",
+        "- Chevrolet: Bolt EV / EUV, Equinox EV, Blazer EV, Silverado EV",
+        "- Hyundai & Kia: Ioniq 5, Ioniq 6, EV6, EV9",
+        "- BMW & Mercedes-Benz: BMW i4, BMW iX, Mercedes EQE, EQS",
+        "- Rivian: R1T, R1S",
+        "- Gasoline & Hybrid Benchmarks: Toyota Camry Hybrid, Honda Accord Hybrid, Toyota RAV4 Hybrid, Toyota RAV4 Prime PHEV, Ford F-150 Gas, Honda Civic",
+        "",
+        "## Calculation Methodology & Formulas",
+        "- Electric Vehicle (EV) Monthly Cost: (Monthly Miles / Efficiency mi_per_kWh) * Blended Electricity Rate * (1 + Charging Loss)",
+        "  - Blended Rate = (Home Rate * Home Share %) + (Public Rate * (1 - Home Share %))",
+        "  - Default charging efficiency loss: 10% (Level 2 AC wallbox conversion and battery thermal overhead).",
+        "  - Winter temperature adjustment: 20% range penalty (winter factor 0.80x) when winter mode is selected.",
+        "- Gas Vehicle Monthly Cost: (Monthly Miles / MPG) * Gas Price ($/gal)",
+        "- Plug-in Hybrid (PHEV) Cost: Electric miles split via EPA Utility Factor curve; electricity and petrol costs calculated separately and summed.",
+        "",
+        "## Data Sources & Lineage",
+        "- U.S. EPA / DOE Fuel Economy: 2026 Model Year official dynamometer ratings from fueleconomy.gov.",
+        f"- U.S. Energy Information Administration (EIA) Form 861M: Monthly Electric Power Industry Report for state-by-state residential retail electricity rates ({energy['sources']['electricity']['period']}).",
+        f"- U.S. Energy Information Administration (EIA) Weekly Petroleum Status: Weekly retail regular motor gasoline prices (week ending {energy['sources']['gasoline']['weekEnding']}).",
+        f"- Public DC Fast Charging Average: Aggregated national benchmark (${regions['dcFastCharging']['usdPerKwh']:.2f}/kWh).",
+        "",
+        "## Legal & About",
+        f"- [About Us]({BASE}/about): Mission, author, and calculation methodology.",
+        f"- [Contact]({BASE}/contact): Inquiries and feedback.",
+        f"- [Privacy Policy]({BASE}/privacy): In-browser data processing and privacy practices.",
+        f"- [Terms of Service]({BASE}/terms): Terms of usage.",
+        f"- [Cookie Policy]({BASE}/cookie-policy): Cookie disclosures.",
+        f"- [Disclaimer]({BASE}/disclaimer): Disclaimers and estimates notice.",
+        "",
+    ]
+    write(ROOT / "llm.txt", "\n".join(llm_lines))
 
     # sitemap.xml (canonical only — no aliases)
     urls = ["/"] + [r for r in dict.fromkeys(routes) if r not in ("/", "/404")]

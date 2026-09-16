@@ -8,14 +8,37 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>{{TITLE}} — {{SITE_NAME}}</title>
 <meta name="description" content="{{DESCRIPTION}}">
-<link rel="canonical" href="{{BASE}}/{{CANONICAL}}">
+<link rel="canonical" href="{{BASE}}{{CANONICAL}}">
 <meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{SITE_NAME}}">
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="{{DESCRIPTION}}">
-<meta property="og:url" content="{{BASE}}/{{CANONICAL}}">
+<meta property="og:url" content="{{BASE}}{{CANONICAL}}">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BL8GQXGBXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-BL8GQXGBXM');
+</script>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yj2toqyy41");
+</script>
+<!-- Ahrefs Analytics -->
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="4kYVR7mnpbKuSVV63+/yMg" async></script>
+<!-- Plausible Analytics -->
+<script defer data-domain="evchargingcost.online" src="https://plausible.shipsolo.io/js/script.js"></script>
 <script>document.documentElement.className+=" js";</script>
 <link rel="stylesheet" href="/assets/styles.css">
 <script defer src="/assets/consent.js"></script>
