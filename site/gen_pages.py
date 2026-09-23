@@ -387,12 +387,12 @@ def build(vehicles, energy, regions, out_root):
         ]),
         sources_block(energy, regions, vehicles),
     ]
-    write("/", render_page("/", "EV Charging Cost Calculator — by model and state",
-                           "Estimate what an EV costs to charge per month, by model and state, "
-                           "with home and public fast charging priced separately.",
+    write("/", render_page("/", "EV Charging Cost & Rates Calculator (2026) — by Model & State",
+                           "Estimate what an EV costs to charge per month, by vehicle model and US state, "
+                           "with residential electricity rates, home charging, and DC fast charging.",
                            "".join(content), jsonld=_ld_app_faq(
-                               "EV Charging Cost Calculator", "/",
-                               "Estimate EV charging cost by model and state.", [
+                               "EV Charging Cost & Rates Calculator", "/",
+                               "Estimate EV charging cost and electricity rates by model and state.", [
                                    ("How accurate is this calculator?",
                                     "It is an estimate using EPA-published efficiency and EIA average prices, not a quote."),
                                    ("Does it include charger installation cost?",
@@ -411,6 +411,11 @@ def build(vehicles, energy, regions, out_root):
         f'<span class="c-meta">{v["miPerKwh"]:.2f} mi/kWh · {v["mpgeCombined"]:.0f} MPGe</span></a>'
         for v in teslas)
     t_faqs = [
+        ("How much does it cost to charge a Tesla at home and at a Supercharger?",
+         f"A full home charge for a Tesla typically costs between $19 and $30 at the US residential "
+         f"average of {money(us_kwh, '$', 4)}/kWh. At a public Tesla Supercharger (averaging ~${dcfc:.2f}/kWh), "
+         f"a full charge costs approximately $46 to $72. For 1,000 miles of driving per month, expect around "
+         f"$67 to $118 depending on your model."),
         ("Is this run by Tesla?", "No. This is an independent estimator and is not "
          "affiliated with, endorsed by, or sponsored by Tesla, Inc."),
         ("How much does it cost to charge a Model Y at home?",
@@ -424,6 +429,20 @@ def build(vehicles, energy, regions, out_root):
         ("Do I need to enter a ZIP code?", "No — pick your state."),
         ("Can I share my result?", "Yes, the URL carries your inputs."),
     ]
+    tesla_quick_table = [
+        '<h2>How Much Does It Cost to Charge a Tesla? (2026 Averages)</h2>',
+        '<p>Quick benchmark across popular Tesla models, based on published EPA ratings, US average residential electricity ($0.1942/kWh), and typical Supercharger pricing ($0.47/kWh):</p>',
+        '<div class="table-scroll"><table class="model-cost-table">'
+        '<thead><tr><th>Tesla Model</th><th>EPA Range</th><th>Full Home Charge</th><th>Full Supercharger</th><th>Est. Monthly (1,000 mi)</th></tr></thead>'
+        '<tbody>'
+        '<tr><td><strong>Tesla Model 3</strong> (Premium RWD)</td><td>363 miles</td><td>~$19.11</td><td>~$46.24</td><td><strong>$67.59</strong>/mo</td></tr>'
+        '<tr><td><strong>Tesla Model Y</strong> (Long Range RWD)</td><td>357 miles</td><td>~$19.24</td><td>~$46.56</td><td><strong>$69.19</strong>/mo</td></tr>'
+        '<tr><td><strong>Tesla Model S</strong> (Dual Motor)</td><td>410 miles</td><td>~$23.76</td><td>~$57.51</td><td><strong>$74.42</strong>/mo</td></tr>'
+        '<tr><td><strong>Tesla Model X</strong> (Dual Motor)</td><td>352 miles</td><td>~$24.21</td><td>~$58.60</td><td><strong>$88.33</strong>/mo</td></tr>'
+        '<tr><td><strong>Tesla Cybertruck</strong> (Dual Motor AWD)</td><td>325 miles</td><td>~$29.79</td><td>~$72.09</td><td><strong>$117.69</strong>/mo</td></tr>'
+        '</tbody></table></div>',
+        '<p class="state-stat__sub" style="margin-top:6px;">*Estimates assume full 0–100% battery replenishment with 10% AC charging loss. Monthly cost assumes standard 80% home / 20% Supercharger mix. Use the calculator below to set your exact state rates and mileage.</p>',
+    ]
     content = [
         '<p class="eyebrow">Free · No signup · Not affiliated with Tesla, Inc.</p>',
         '<h1>Tesla Charging Cost Calculator</h1>',
@@ -433,6 +452,7 @@ def build(vehicles, energy, regions, out_root):
         'plug-in hybrid or petrol car with the <a href="/">general EV charging cost calculator</a> '
         '— it covers every make and model, not just Tesla.</p></div>',
         rates_strip(energy, regions, f'<span><b>Rates updated:</b> {esc(el_period)}</span>'),
+        "".join(tesla_quick_table),
         calc_widget({"mode": "single", "groups": json.dumps([["ev"]]), "make": "Tesla",
                      "vehicle-a": t0["slug"], "state": "", "show": ALL_SHOW},
                     prerender_single(t0, p0)),
@@ -446,8 +466,8 @@ def build(vehicles, energy, regions, out_root):
         sources_block(energy, regions, vehicles),
     ]
     write("/tesla-charging-cost-calculator/", render_page(
-        "/tesla-charging-cost-calculator/", "Tesla Charging Cost Calculator (2026)",
-        "Estimate the monthly charging cost for every Tesla model at your local electricity price.",
+        "/tesla-charging-cost-calculator/", "Tesla Charging Cost Calculator (2026) — Home & Supercharger",
+        "Estimate monthly Tesla charging costs across Model 3, Model Y, Model S, Model X, and Cybertruck at home rates and Supercharger pricing.",
         "".join(content), tesla=True,
         jsonld=_ld_app_faq("Tesla Charging Cost Calculator", "/tesla-charging-cost-calculator/",
                            "Estimate monthly charging cost for every Tesla model.", t_faqs)), out_root)
@@ -586,9 +606,53 @@ def build(vehicles, energy, regions, out_root):
     for route, title, desc, lede, ca, cb, show, faqs in COMPARISONS:
         va = first_of(ca)
         vb = first_of(cb)
+        title_h1 = title
+        extra_content = []
+        if route == "/hybrid-vs-gas-cost-calculator/":
+            title = "Hybrid vs Gas Savings Calculator (2026) — Hybrid Car Fuel Savings"
+            title_h1 = "Hybrid vs Gas (Petrol) Fuel Savings Calculator"
+            desc = "Calculate hybrid car fuel savings vs gas and petrol cars. Compare monthly and annual fuel savings for popular hybrids across the US, Canada (CAD), and UK."
+            lede = "Calculate how much money you save driving a hybrid car versus a conventional petrol or gas vehicle. Compare monthly and yearly fuel savings based on your driving distance and local fuel prices."
+            extra_content = [
+                '<h2>How Much Does a Hybrid Car Save on Fuel?</h2>',
+                '<p>On average, driving a hybrid saves between <strong>$350 and $600 per year</strong> in fuel costs compared to an equivalent gasoline car over 12,000 miles (at typical fuel prices of $3.68/gallon). Because hybrid powertrains capture energy through regenerative braking and use an electric motor during stop-and-go driving, fuel savings are largest in urban city traffic.</p>',
+                '<div class="table-scroll"><table class="model-cost-table">'
+                '<thead><tr><th>Comparison (Hybrid vs Gas)</th><th>Hybrid Rating</th><th>Gas Rating</th><th>Est. Annual Savings</th><th>Payback Context</th></tr></thead>'
+                '<tbody>'
+                '<tr><td><strong>Sedan:</strong> Toyota Camry Hybrid vs Corolla Gas</td><td>51 MPG combined</td><td>35 MPG combined</td><td><strong style="color:var(--accent-ink)">+$408 / year</strong></td><td>Recovers hybrid premium in ~4–5 years</td></tr>'
+                '<tr><td><strong>Compact SUV:</strong> Toyota RAV4 Hybrid vs RAV4 Gas</td><td>39 MPG combined</td><td>29 MPG combined</td><td><strong style="color:var(--accent-ink)">+$372 / year</strong></td><td>Popular family commuter benchmark</td></tr>'
+                '<tr><td><strong>Hatchback:</strong> Toyota Prius vs Standard Gas Car</td><td>57 MPG combined</td><td>32 MPG combined</td><td><strong style="color:var(--accent-ink)">+$576 / year</strong></td><td>Highest annual fuel savings in class</td></tr>'
+                '</tbody></table></div>',
+                '<h2>Calculating Hybrid Savings in Canada & the UK</h2>',
+                '<p>For drivers outside the United States, fuel savings translate directly into local metric units:</p>',
+                '<ul>'
+                '<li><strong>In Canada (CAD &amp; L/100 km):</strong> A 51 MPG hybrid uses approximately 4.6 L/100 km, while a 35 MPG gas car consumes about 6.7 L/100 km. At an average Canadian retail fuel price of $1.60 CAD per litre, driving 20,000 km per year delivers approximately <strong>$670 CAD in annual fuel savings</strong>. You can convert between US MPG and L/100 km using our <a href="/unit-converter/mpg-l100km/">MPG to L/100 km converter</a>, or view provincial energy rates on our <a href="/ev-charging-cost/ca/">Canada EV cost page</a>.</li>'
+                '<li><strong>In the United Kingdom &amp; Commonwealth (Petrol):</strong> British imperial gallons are roughly 20% larger than US gallons. Because conventional self-charging hybrids do not plug into the mains, they run purely on standard unleaded petrol — meaning no home wallbox installation or charging infrastructure is required.</li>'
+                '</ul>'
+            ]
+            faqs = [
+                ("How much does a hybrid car save on fuel per year?",
+                 "Based on 12,000 miles per year at US average fuel prices, a hybrid car typically saves "
+                 "between $350 and $600 per year compared to a similar petrol car. High-mileage and city drivers save even more."),
+                ("How do I calculate hybrid fuel savings in Canada?",
+                 "Canadian drivers can convert fuel economy to L/100 km: a 50 MPG hybrid consumes roughly 4.7 L/100 km "
+                 "versus 7.0 L/100 km for a standard gas vehicle. At $1.60 CAD per litre, this saves roughly $35 to $60 CAD per month."),
+                ("Is a hybrid car worth the extra purchase price?",
+                 "From a fuel-savings perspective, the typical hybrid price premium ($1,500 to $2,500) pays for itself in "
+                 "roughly 3 to 5 years under average driving conditions, after which all fuel savings represent pure cost reduction."),
+                ("Does this calculator compare hybrid vs petrol for UK drivers?",
+                 "Yes. Conventional hybrids run on standard petrol. Set your local petrol price and annual mileage in the calculator above "
+                 "to see your exact monthly and yearly fuel difference."),
+                ("Why do hybrids save more fuel in city driving than on highways?",
+                 "In stop-and-go city driving, hybrids constantly recapture kinetic energy via regenerative braking that would "
+                 "otherwise be lost as friction heat, and the electric motor powers low-speed acceleration without burning petrol."),
+                ("Do conventional hybrids need to be plugged in?",
+                 "No. Standard hybrids recharge their high-voltage battery internally using engine power and regenerative braking. "
+                 "If you want to plug in and charge from home electricity, see our PHEV calculator."),
+            ]
         content = [
             f'<p class="eyebrow">Free · No signup · Runs in your browser</p>',
-            f'<h1>{esc(title)}</h1>',
+            f'<h1>{esc(title_h1)}</h1>',
             f'<p class="lede">{esc(lede)}</p>',
             rates_strip(energy, regions, f'<span><b>Rates updated:</b> {esc(el_period)}</span>'),
             calc_widget({"mode": "compare", "groups": json.dumps([ca, cb]),
@@ -600,6 +664,7 @@ def build(vehicles, energy, regions, out_root):
             '<p>This is a running-cost comparison: energy and fuel only. Purchase price, finance, '
             'insurance, maintenance, depreciation, tax and incentives are all excluded, because mixing '
             'them into a monthly fuel figure is how comparisons end up misleading.</p>',
+            "".join(extra_content),
             faq_block(faqs),
             '<h2>Other comparisons</h2>',
             card_grid([(r2, t2, d2) for r2, t2, d2, *_ in COMPARISONS if r2 != route][:4]),
@@ -856,7 +921,7 @@ def build(vehicles, energy, regions, out_root):
 
     hub_content = [
         '<p class="eyebrow">Data & Rankings · 2026 Analysis</p>',
-        '<h1>EV Charging Cost by State: All 50 States Ranked (2026)</h1>',
+        '<h1>EV Charging Cost & Electricity Rates by State: All 50 States Ranked (2026)</h1>',
         f'<p class="lede">Residential electricity prices vary dramatically across America — from '
         f'<strong>{money(cheapest_st["usdPerKwh"], "$", 4)}/kWh in {esc(cheapest_st["name"])}</strong> to '
         f'<strong>{money(priciest_st["usdPerKwh"], "$", 4)}/kWh in {esc(priciest_st["name"])}</strong>. '
@@ -883,10 +948,10 @@ def build(vehicles, energy, regions, out_root):
 
     hub_route = "/charging-cost/"
     write(hub_route, render_page(
-        hub_route, "EV Charging Cost by State (2026) — All 50 States Ranked",
-        "Ranked list of all 50 US states and DC by residential electricity rates, monthly EV charging costs, and annual petrol savings.",
+        hub_route, "EV Charging Cost & Electricity Rates by State (2026) — All 50 States Ranked",
+        "Ranked leaderboard of all 50 US states and DC by residential electricity rates, monthly EV charging costs, and annual petrol fuel savings.",
         "".join(hub_content),
-        jsonld=_ld_app_faq("EV Charging Cost by State — All 50 States Ranked", hub_route,
+        jsonld=_ld_app_faq("EV Charging Cost & Electricity Rates by State — All 50 States Ranked", hub_route,
                            "Compare EV charging costs and residential electricity rates across all 50 US states.",
                            hub_faqs)), out_root)
     routes.append(hub_route)

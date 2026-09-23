@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Build the compliance/legal static site for Cloudflare Pages.
 
 Single source of truth for legal copy is ../legal/*.md (plus src/home.md).
@@ -30,10 +30,10 @@ DOMAIN = CONFIG["domain"]
 SITE_NAME = CONFIG["siteName"]
 YEAR = CONFIG["buildDate"][:4]
 
-# Canonical routes (see 04-compliance/04-legal-route-contract.md 搂4.1)
+# Canonical routes (see 04-compliance/04-legal-route-contract.md §4.1)
 LEGAL_PAGES = ["privacy.md", "terms.md", "cookie-policy.md", "disclaimer.md", "about.md", "contact.md"]
 
-# Alias -> canonical, 308 permanent (see 搂4.2)
+# Alias -> canonical, 308 permanent (see §4.2)
 REDIRECTS = {
     "/privacy-policy": "/privacy",
     "/privacy-policy/": "/privacy",
@@ -51,6 +51,14 @@ REDIRECTS = {
     "/refund": "/terms#no-purchases",
     "/refund-policy": "/terms#no-purchases",
     "/returns": "/terms#no-purchases",
+    "/hybrid-car-savings-calculator": "/hybrid-vs-gas-cost-calculator/",
+    "/hybrid-car-savings-calculator/": "/hybrid-vs-gas-cost-calculator/",
+    "/hybrid-savings-calculator": "/hybrid-vs-gas-cost-calculator/",
+    "/hybrid-savings-calculator/": "/hybrid-vs-gas-cost-calculator/",
+    "/hybrid-vs-petrol-calculator": "/hybrid-vs-gas-cost-calculator/",
+    "/hybrid-vs-petrol-calculator/": "/hybrid-vs-gas-cost-calculator/",
+    "/tesla-charging-cost": "/tesla-charging-cost-calculator/",
+    "/tesla-charging-cost/": "/tesla-charging-cost-calculator/",
 }
 
 # ---------------------------------------------------------------- markdown ---
@@ -279,7 +287,7 @@ def write(path: Path, content: str) -> None:
 # -------------------------------------------------------------------- build ---
 
 def build() -> None:
-    print("Building site 鈥?)
+    print("Building site …")
 
     # assets
     assets = ROOT / "assets"
@@ -288,13 +296,13 @@ def build() -> None:
         shutil.copyfile(SRC / f, assets / f)
         print(f"  wrote assets/{f}")
 
-    # ZIP -> state table (PRD 搂8 MVP-4); optional, build must not break without it
+    # ZIP -> state table (PRD §8 MVP-4); optional, build must not break without it
     zips_src = ROOT.parent / "data" / "zips.json"
     if zips_src.exists():
         shutil.copyfile(zips_src, assets / "zips.json")
         print("  wrote assets/zips.json")
     else:
-        print("  WARN  data/zips.json missing 鈥?ZIP lookup disabled")
+        print("  WARN  data/zips.json missing — ZIP lookup disabled")
 
     routes = []
 
@@ -318,7 +326,7 @@ def build() -> None:
             meta + content, tesla=fm.get("tesla") == "true", is_contact=is_contact))
         routes.append(route)
 
-    # calculator pages (PRD 搂8 routes) 鈥?generated from real EPA/EIA data
+    # calculator pages (PRD §8 routes) — generated from real EPA/EIA data
     import gen_pages
     data_dir = ROOT.parent / "data"
     vehicles = json.loads((data_dir / "vehicles.json").read_text(encoding="utf-8"))
@@ -326,7 +334,7 @@ def build() -> None:
     regions = json.loads((data_dir / "regions.json").read_text(encoding="utf-8"))
     routes += gen_pages.build(vehicles, energy, regions, ROOT)
 
-    # Shared, cacheable calculator payload 鈥?written once, referenced by every
+    # Shared, cacheable calculator payload — written once, referenced by every
     # calculator page. gen_pages.build() sets gen.DATA_JSON.
     write(assets / "fuel-data.js", "window.FUEL_DATA=" + gen_pages.gen.DATA_JSON + ";\n")
 
@@ -345,13 +353,13 @@ def build() -> None:
     routes.append("/404")
 
     # _redirects  (308 alias redirects; handled natively by Workers Static Assets)
-    # NOTE: do NOT add `/*  /404  404` here 鈥?a 404 status code is invalid in a
+    # NOTE: do NOT add `/*  /404  404` here — a 404 status code is invalid in a
     # _redirects file, and the 404 fallback is provided by wrangler.toml
     # `assets.not_found_handling = "404-page"` (serves 404.html with a 404 status).
     lines = [f"{src}  {dst}  308" for src, dst in REDIRECTS.items()]
     write(ROOT / "_redirects", "\n".join(lines) + "\n")
 
-    # _headers  (Referrer-Policy mitigates query-string leakage 鈥?see P1-1 / K7)
+    # _headers  (Referrer-Policy mitigates query-string leakage — see P1-1 / K7)
     write(ROOT / "_headers", "\n".join([
         "/*",
         "  X-Content-Type-Options: nosniff",
@@ -391,7 +399,7 @@ def build() -> None:
     for code, info in sorted(energy.get("states", {}).items()):
         name = info.get("name", code)
         cents = info.get("centsPerKwh", 0)
-        llm_lines.append(f"- [{name} EV Charging Cost]({BASE}/charging-cost/{code.lower()}/): {name} residential electricity rate average of {cents:.2f}垄/kWh.")
+        llm_lines.append(f"- [{name} EV Charging Cost]({BASE}/charging-cost/{code.lower()}/): {name} residential electricity rate average of {cents:.2f}¢/kWh.")
     llm_lines += [
         "",
         "## Popular Vehicle Models Included",
@@ -428,7 +436,7 @@ def build() -> None:
     ]
     write(ROOT / "llm.txt", "\n".join(llm_lines))
 
-    # sitemap.xml (canonical only 鈥?no aliases)
+    # sitemap.xml (canonical only — no aliases)
     urls = ["/"] + [r for r in dict.fromkeys(routes) if r not in ("/", "/404")]
     LEGAL_ROUTES = {"/privacy", "/terms", "/cookie-policy", "/disclaimer", "/about", "/contact"}
 
@@ -456,7 +464,7 @@ def build() -> None:
 # -------------------------------------------------------------------- check ---
 
 def check() -> int:
-    print("\nSelf-check 鈥?)
+    print("\nSelf-check …")
     failures: list[str] = []
 
     # exclude src/ (templates, not build output)
@@ -531,8 +539,8 @@ def check() -> int:
     else:
         print("  OK  all non-essential tags ship disabled (consent gate)")
 
-    # 8. banned expressions (04-compliance/05-banned-expressions.md A鈥揊, hard gate)
-    # A match is excused when it sits inside a disclaimer or negation 鈥?"we are
+    # 8. banned expressions (04-compliance/05-banned-expressions.md A–F, hard gate)
+    # A match is excused when it sits inside a disclaimer or negation — "we are
     # not affiliated with, endorsed by, or sponsored by" is the mandated
     # wording, not a claim. Without this the scanner would fail on the exact
     # sentences the compliance stage requires.
@@ -573,7 +581,7 @@ def check() -> int:
                 if NEGATION.search(window):
                     continue
                 banned_hits.append(f"{f.relative_to(ROOT).as_posix()}: [{group}] "
-                                   f"\"{m.group(0)}\" 鈥?鈥window.strip()}鈥?)
+                                   f"\"{m.group(0)}\" — …{window.strip()}…")
     if banned_hits:
         failures.append(f"{len(banned_hits)} banned-expression hit(s):\n      " +
                         "\n      ".join(banned_hits[:20]))
@@ -586,7 +594,7 @@ def check() -> int:
                     "total cost of ownership"):
         if not any(re.search(p, control, re.I) and not NEGATION.search(control)
                    for _, p in BANNED):
-            failures.append(f"banned-expression gate is not catching \"{control}\" 鈥?regex is dead")
+            failures.append(f"banned-expression gate is not catching \"{control}\" — regex is dead")
     if not any("gate is not catching" in x for x in failures):
         print("  OK  banned-expression gate is live (control phrases are caught)")
 
@@ -645,4 +653,3 @@ if __name__ == "__main__":
     if code == 0 and "--check" not in sys.argv:
         stage()
     sys.exit(code)
-
