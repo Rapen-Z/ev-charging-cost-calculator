@@ -270,6 +270,7 @@ def render_page(route, title, description, content, tesla=False, jsonld=None,
         "operatingSystem": "Any (web browser)",
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
         "description": description,
+        "image": f"{cfg['base'].rstrip('/')}/assets/og-image.png",
     }
     return (tpl
             .replace("{{TITLE}}", esc(title))

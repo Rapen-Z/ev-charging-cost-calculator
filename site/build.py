@@ -59,6 +59,8 @@ REDIRECTS = {
     "/hybrid-vs-petrol-calculator/": "/hybrid-vs-gas-cost-calculator/",
     "/tesla-charging-cost": "/tesla-charging-cost-calculator/",
     "/tesla-charging-cost/": "/tesla-charging-cost-calculator/",
+    "/og-image.png": "/assets/og-image.png",
+    "/llms-full.txt": "/llms.txt",
 }
 
 # ---------------------------------------------------------------- markdown ---
@@ -235,6 +237,7 @@ def jsonld(title: str, route: str, description: str, is_contact: bool) -> str:
         "description": description,
         "url": f"{BASE}{route}",
         "inLanguage": "en",
+        "image": f"{BASE}/assets/og-image.png",
         "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": f"{BASE}/"},
         "publisher": {"@type": "Organization", "name": CONFIG["operatingEntity"]},
     }
@@ -292,7 +295,7 @@ def build() -> None:
     # assets
     assets = ROOT / "assets"
     assets.mkdir(exist_ok=True)
-    for f in ("styles.css", "consent.js", "calc.js", "app.js", "orb.js", "favicon.svg"):
+    for f in ("styles.css", "consent.js", "calc.js", "app.js", "orb.js", "favicon.svg", "og-image.png"):
         shutil.copyfile(SRC / f, assets / f)
         print(f"  wrote assets/{f}")
 
@@ -368,6 +371,17 @@ def build() -> None:
         "  Permissions-Policy: geolocation=(), camera=(), microphone=()",
         "  Strict-Transport-Security: max-age=31536000; includeSubDomains",
         "",
+        "/llms.txt",
+        "  Content-Type: text/plain; charset=utf-8",
+        "  Cache-Control: public, max-age=86400",
+        "",
+        "/llm.txt",
+        "  Content-Type: text/plain; charset=utf-8",
+        "  Cache-Control: public, max-age=86400",
+        "",
+        "/assets/og-image.png",
+        "  Cache-Control: public, max-age=604800, immutable",
+        "",
     ]))
 
     # robots.txt
@@ -376,11 +390,11 @@ def build() -> None:
     # IndexNow verification key
     write(ROOT / "8ae5d014253147388f7094b08cca009f.txt", "8ae5d014253147388f7094b08cca009f")
 
-    # llm.txt for AI/LLM indexing and discovery
+    # llms.txt & llm.txt for AI/LLM indexing and discovery
     llm_lines = [
         f"# {SITE_NAME}",
         "",
-        "> Comprehensive EV, PHEV, hybrid, and petrol charging and fuel cost calculator based on official U.S. EPA and EIA Form 861M data across all 50 U.S. states and DC.",
+        "> Comprehensive EV, PHEV, hybrid, and petrol charging and fuel cost calculator based on published U.S. EPA and EIA Form 861M data across all 50 U.S. states and DC.",
         "",
         "## Overview",
         f"{SITE_NAME} ({BASE}) is a free, real-time web calculator for estimating and comparing electric vehicle charging costs, gas costs, plug-in hybrid (PHEV) fuel splits, and hybrid vehicle operating costs. All energy prices are grounded in U.S. Energy Information Administration (EIA Form 861M residential electricity, weekly retail gasoline) and U.S. Environmental Protection Agency (EPA Model Year 2026 fueleconomy.gov) datasets.",
@@ -389,6 +403,7 @@ def build() -> None:
         f"- [Universal EV Charging Cost Calculator]({BASE}/): Estimate monthly and annual home and public charging costs for any EV, PHEV, hybrid, or gas vehicle. Includes efficiency, electric rates, charging loss, and winter temperature penalty controls.",
         f"- [Tesla Charging Cost Calculator]({BASE}/tesla-charging-cost-calculator/): Specialized charging cost calculator for Tesla Model 3, Model Y, Model S, Model X, and Cybertruck across standard range, long range, and performance trims.",
         f"- [EV vs Gas Cost Calculator]({BASE}/ev-vs-gas-cost-calculator/): Direct side-by-side fuel comparison between battery electric vehicles and gas-powered vehicles with monthly dollar savings and annual fuel economics.",
+        f"- [Hybrid vs Gas Savings Calculator]({BASE}/hybrid-vs-gas-cost-calculator/): Hybrid vehicle fuel savings calculator comparing hybrid models with gas equivalents, including Canada and UK petrol units.",
         f"- [PHEV Charging Cost Calculator]({BASE}/phev-charging-cost-calculator/): Plug-in hybrid calculator implementing the SAE J2841 / EPA Utility Factor curve to split electric miles from gasoline miles.",
         f"- [EV vs PHEV vs Hybrid vs Gas Comparison]({BASE}/ev-vs-phev-vs-hybrid-vs-gas/): Comprehensive 4-way vehicle powertrain comparison for total monthly and annual fuel expenditures.",
         "",
@@ -420,7 +435,7 @@ def build() -> None:
         "- Plug-in Hybrid (PHEV) Cost: Electric miles split via EPA Utility Factor curve; electricity and petrol costs calculated separately and summed.",
         "",
         "## Data Sources & Lineage",
-        "- U.S. EPA / DOE Fuel Economy: 2026 Model Year official dynamometer ratings from fueleconomy.gov.",
+        "- U.S. EPA / DOE Fuel Economy: 2026 Model Year dynamometer ratings from fueleconomy.gov.",
         f"- U.S. Energy Information Administration (EIA) Form 861M: Monthly Electric Power Industry Report for state-by-state residential retail electricity rates ({energy['sources']['electricity']['period']}).",
         f"- U.S. Energy Information Administration (EIA) Weekly Petroleum Status: Weekly retail regular motor gasoline prices (week ending {energy['sources']['gasoline']['weekEnding']}).",
         f"- Public DC Fast Charging Average: Aggregated national benchmark (${regions['dcFastCharging']['usdPerKwh']:.2f}/kWh).",
@@ -434,7 +449,9 @@ def build() -> None:
         f"- [Disclaimer]({BASE}/disclaimer): Disclaimers and estimates notice.",
         "",
     ]
-    write(ROOT / "llm.txt", "\n".join(llm_lines))
+    llm_payload = "\n".join(llm_lines)
+    write(ROOT / "llms.txt", llm_payload)
+    write(ROOT / "llm.txt", llm_payload)
 
     # sitemap.xml (canonical only — no aliases)
     urls = ["/"] + [r for r in dict.fromkeys(routes) if r not in ("/", "/404")]
